@@ -17,6 +17,7 @@ func _process(delta: float) -> void:
 
 func _draw() -> void:
     var w := world_size.x
+    # Distant silhouette layer gives every map depth before foreground details.
     var mountain_color := Color(0.05,0.10,0.16,0.30)
     if zone_id in ["namek"]:
         mountain_color = Color(0.08,0.20,0.16,0.28)
@@ -31,6 +32,8 @@ func _draw() -> void:
         var mh := 90.0 + float((i % 4) * 26)
         draw_colored_polygon(PackedVector2Array([Vector2(mx-190,620),Vector2(mx,620-mh),Vector2(mx+210,620)]), mountain_color)
 
+    # Shared atmospheric layer: soft clouds, distant silhouettes and small
+    # foreground details. Individual maps still provide their own identity.
     if zone_id in ["forest", "ice", "namek"]:
         for i in range(10):
             var x := fposmod(float(i * 510 + 180), w)
@@ -44,12 +47,14 @@ func _draw() -> void:
             draw_circle(Vector2(x,y), 28.0, Color(1,1,1,0.09))
             draw_circle(Vector2(x+26,y+4), 20.0, Color(1,1,1,0.07))
 
+    # Flying silhouettes make the sky feel inhabited.
     for i in range(5):
         var fx := fposmod(float(i * 760 + 280) + sin(t * 0.20 + i) * 70.0, maxf(w, 1.0))
         var fy := 230.0 + float(i % 3) * 48.0
         draw_arc(Vector2(fx, fy), 10.0, PI + 0.2, TAU - 0.2, 8, Color(0.06,0.10,0.15,0.24), 2.0)
         draw_arc(Vector2(fx + 12, fy), 10.0, 0.2, PI - 0.2, 8, Color(0.06,0.10,0.15,0.24), 2.0)
 
+    # Zone-specific accents.
     if zone_id == "city":
         for x in range(1120, 2700, 180):
             draw_circle(Vector2(x, 310), 5.0, Color(1.0,0.85,0.38,0.65))

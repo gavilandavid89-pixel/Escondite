@@ -23,12 +23,15 @@ func setup_effect(id: String, skill_rank: int, direction: Vector2, effect_mode: 
     sprite.texture = texture
     sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
     sprite.modulate = tint
+    # Los assets de los rayos fueron dibujados mirando hacia la izquierda; los invertimos
+    # para que la punta del ataque siempre siga el facing real del personaje.
     rotation = direction.angle() + (PI if effect_mode == "beam" else 0.0)
     z_index = 25
 
     var r := float(rank - 1)
     var base := 0.50 + 0.08 * r
     if mode == "beam":
+        # Small orb at low rank -> controlled, recognizable signature beam at high rank.
         var stretch := 1.0 if rank <= 3 else 1.0 + 0.12 * float(rank - 3)
         _final_scale = Vector2(base * stretch, base * (1.0 + 0.03 * r))
         duration = 0.40 + 0.015 * r

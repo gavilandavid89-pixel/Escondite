@@ -22,6 +22,7 @@ func run() -> void:
     if int(synthetic.hp) < 3300000 or int(synthetic.hp) > 3500000: failures.append("500k_power_boss_hp")
     if int(synthetic.attack) < 185000 or int(synthetic.attack) > 195000: failures.append("500k_power_boss_attack")
 
+    # Equal-Power sanity check: a comparable player should need tens, not hundreds/thousands, of basic hits.
     var player_attack := int(round(500000.0 * 0.25)) + 10 * 2
     var reduced_hit := maxi(1, int(round(float(player_attack) * (1.0 - gs.damage_reduction_from_armor(float(synthetic.armor_rating))))))
     var hits := int(ceil(float(synthetic.hp) / float(reduced_hit)))

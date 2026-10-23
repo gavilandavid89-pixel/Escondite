@@ -37,3 +37,4 @@ func toggle_mute() -> void:
 	else:
 		if music_player.stream:
 			music_player.play()
+

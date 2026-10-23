@@ -17,6 +17,7 @@ func _draw() -> void:
 	var ws: Vector2 = world.current_map.world_size
 	var sx: float = size.x/ws.x
 	var sy: float = size.y/ws.y
+	# map lanes
 	draw_rect(Rect2(0,size.y*0.70,size.x,size.y*0.30),Color(0.16,0.27,0.16,0.8),true)
 	for enemy in world.enemies:
 		if is_instance_valid(enemy):
@@ -27,5 +28,6 @@ func _draw() -> void:
 	for npc in world.get_tree().get_nodes_in_group("zone_npcs"):
 		if is_instance_valid(npc):
 			draw_circle(Vector2(npc.position.x*sx,npc.position.y*sy),3,Color("#ffd35c"))
+	# portals as cyan edge markers
 	draw_circle(Vector2(4,size.y*0.7),4,Color("#6be5ff"))
 	draw_circle(Vector2(size.x-4,size.y*0.7),4,Color("#6be5ff"))

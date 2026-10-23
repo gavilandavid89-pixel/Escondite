@@ -11,6 +11,7 @@ func run() -> void:
     var enemy_scene := load("res://scenes/enemies/enemy.tscn") as PackedScene
     var player_scene := load("res://scenes/player/player.tscn") as PackedScene
 
+    # Offensive skills must have real damage. Pure self buffs/transforms/heals are exempt.
     for raw_id in sm.SKILLS.keys():
         var id := str(raw_id)
         var d: Dictionary = sm.data(id)
@@ -35,6 +36,7 @@ func run() -> void:
         failures.append("solar_flare_range_not_scaling")
     gs.skill_ranks["solar_flare"] = 1
 
+    # Blind must be a real state that can disable the enemy.
     var test_player = player_scene.instantiate()
     get_root().add_child(test_player)
     var enemy = enemy_scene.instantiate()
@@ -55,6 +57,7 @@ func run() -> void:
     if sm.enemy_effect("telekinesis") != "":
         failures.append("telekinesis_has_enemy_effect")
 
+    # Every race's starter KI skill must deal real damage at rank 1.
     gs.reset_new_game()
     for race in race_manager.names():
         gs.race = race

@@ -27,6 +27,7 @@ func _draw()->void:
 	_draw_ellipse_custom(Vector2(0,38),Vector2(24,7),Color(0,0,0,0.20))
 	draw_circle(Vector2(0,-22),18*pulse,Color("#4adf65"))
 	draw_circle(Vector2(0,-22),13*pulse,Color("#b5ffd0"))
+	# cabeza estilizada
 	draw_colored_polygon(PackedVector2Array([Vector2(-17,-20),Vector2(-28,-35),Vector2(-10,-31),Vector2(0,-48),Vector2(10,-31),Vector2(28,-35),Vector2(17,-20),Vector2(10,-8),Vector2(-10,-8)]),Color("#43b95a"))
 	draw_circle(Vector2(-7,-23),3,Color("#ffe46b")); draw_circle(Vector2(7,-23),3,Color("#ffe46b"))
 	draw_string(ThemeDB.fallback_font,Vector2(-55,-70),"SHENRON",HORIZONTAL_ALIGNMENT_CENTER,110,13,Color(0.75,1,0.80))

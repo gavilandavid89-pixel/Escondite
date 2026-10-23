@@ -21,6 +21,7 @@ func run() -> void:
             var path := "%s/rank_%02d.png" % [dir, r]
             if not ResourceLoader.exists(path):
                 failures.append("missing:%s:%d" % [id, r])
+    # Taiyōken and universal Barrier intentionally remain procedural.
     for id in ["solar_flare", "barrier"]:
         var dir: String = str(sm.effect_dir(id))
         if dir == "":

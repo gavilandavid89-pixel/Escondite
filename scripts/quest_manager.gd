@@ -76,6 +76,7 @@ func _complete(q: Dictionary) -> void:
         GameState.achievements.append(achievement_id)
     quest_completed.emit(q)
     GameState.changed.emit()
+    # Mission five grants the race's second technique for free.
     if completed_count() >= 5:
         SkillManager.unlock_second_skill_after_mission_five()
 

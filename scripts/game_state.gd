@@ -6,11 +6,15 @@ signal potential_changed(value: int)
 
 var player_name := "Goku"
 var race := "Saiyan"
+
+# Dragon Realm has no character levels. Power is the only progression number.
 var power := 10
 var potential_points := 0
+
 var hp := 140
 var ki := 120
 var zeni := 80
+# Combat attributes purchased with Potential. Each attribute has its own upgrade counter.
 var vitality := 10
 var attack_stat := 10
 var ki_power := 10
@@ -20,6 +24,7 @@ var crit_chance := 5.0
 var crit_damage := 150.0
 var ki_regen := 10.0
 var dodge_chance := 3.0
+# Legacy alias kept for old content/equipment. New systems should use armor.
 var defense := 8
 var stat_upgrade_counts: Dictionary = {
     "vitality": 0, "attack_stat": 0, "ki_power": 0, "armor": 0,
@@ -106,6 +111,7 @@ func combat_power() -> int:
     return power
 
 func attack_power() -> int:
+    # Power is the main combat scale; Potential-funded Attack remains a meaningful build choice.
     return maxi(1, int(round(float(power) * 0.25)) + attack_stat * 2 + InventoryManager.equipment_bonus("strength"))
 
 func ki_damage() -> int:
@@ -127,6 +133,7 @@ func armor_rating() -> float:
     return maxf(1.0, sqrt(float(power)) * 2.5 + float(armor_value()) * 10.0)
 
 func damage_reduction_from_armor(rating: float) -> float:
+    # Soft-cap at 45% so armor remains valuable without making high-Power fights invulnerable.
     return clampf(0.45 * rating / (rating + 180.0), 0.0, 0.45)
 
 func ki_regen_rate() -> float:
@@ -188,6 +195,9 @@ func stat_effect_text(stat: String) -> String:
         "dodge_chance": return "+1% evasión"
     return ""
 
+# Power earned from a hit uses both the enemy's power and how much of its body
+# was actually damaged by the player's attack. The relative-power factor makes
+# early mobs converge to ~1 power per hit once they become trivial.
 func calculate_hit_gain(enemy_power: int, damage: int, target_max_hp: int) -> int:
     if enemy_power <= 0 or damage <= 0 or target_max_hp <= 0:
         return 0

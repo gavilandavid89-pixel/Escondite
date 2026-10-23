@@ -44,6 +44,8 @@ func run() -> void:
         failures.append("ki_not_unlocked_at_5")
     if not sm.learn("saiyan_ki_burst"):
         failures.append("ki_free_unlock")
+    if gs.potential_points != 0:
+        failures.append("free_ki_spent_potential")
 
     gs.potential_points = sm.rank_cost("super_saiyan", 2) + sm.unlock_cost("super_saiyan") + 50
     if not sm.learn("super_saiyan"):

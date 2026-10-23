@@ -1,1 +1,6 @@
-[gd_scene load_steps=2 format=3]\n\n[ext_resource type="Script" path="res://tests/stats_regression.gd" id="1"]\n\n[node name="StatsRegression" type="Node"]\nscript = ExtResource("1")\n
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://tests/stats_regression.gd" id="1"]
+
+[node name="StatsRegression" type="Node"]
+script = ExtResource("1")

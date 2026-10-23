@@ -144,5 +144,5 @@ def main():
         sock,addr=server.accept()
         threading.Thread(target=client_thread,args=(sock,addr),daemon=True).start()
 
-if __name__ == '__main__':
+if __name__=='__main__':
     main()

@@ -147,6 +147,8 @@ func derived_stats(id: String, data: Dictionary = {}) -> Dictionary:
             crit_damage = 175.0
             dodge = 3.5
             ki_mult = 0.42
+    # These are intentionally derived from Power. The old hand-entered HP/damage values
+    # remain in the catalog as legacy notes but are not trusted for combat balance.
     var max_hp := maxi(1, int(round(float(power) * hp_mult)))
     var attack := maxi(1, int(round(float(power) * attack_mult)))
     var armor_rating := maxi(1, int(round((sqrt(float(power)) * 4.0 + float(power) * 0.0015) * armor_mult)))

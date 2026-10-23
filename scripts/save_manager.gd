@@ -68,6 +68,9 @@ func load_game() -> bool:
 
     GameState.player_name = str(data.get("player_name", "Goku"))
     GameState.race = str(data.get("race", "Saiyan"))
+
+    # Migration from the old prototype. Legacy level/XP saves are converted once into
+    # Power so existing players keep their progress; character levels no longer exist.
     var migrated_power := int(data.get("power", 0))
     if migrated_power <= 0:
         var old_level := int(data.get("level", 1))
