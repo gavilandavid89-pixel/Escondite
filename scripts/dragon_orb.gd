@@ -31,6 +31,7 @@ func _draw()->void:
 	draw_circle(Vector2.ZERO,26.0,Color(1.0,0.45,0.18,0.10))
 	draw_circle(Vector2.ZERO,17.0,Color("#f39a3f"))
 	draw_circle(Vector2.ZERO,12.0,Color("#ffd767"))
+	# estrella estilizada
 	for i in range(orb_index):
 		var a:=TAU*float(i)/7.0-PI*0.5
 		draw_circle(Vector2(cos(a)*7.0,sin(a)*7.0),1.6,Color("#b64824"))
