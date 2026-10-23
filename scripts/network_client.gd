@@ -66,8 +66,6 @@ func _read_packets() -> void:
                 elif str(data.get("type", "")) == "AUTH_OK":
                     var state = get_node_or_null("/root/GameState")
                     if state:
-                        state.player_name = str(data.get("name", state.player_name))
-                        state.power = int(data.get("power", state.power))
                         state.current_zone = str(data.get("zone", state.current_zone))
                         state.position_x = float(data.get("x", state.position_x))
                         state.position_y = float(data.get("y", state.position_y))
