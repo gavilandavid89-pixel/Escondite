@@ -1,0 +1,1 @@
+[gd_scene load_steps=2 format=3]\n\n[ext_resource path="res://tests/mob_balance_regression.gd" type="Script" id="1"]\n\n[node name="MobBalanceRegression" type="Node"]\nscript = ExtResource("1")\n
