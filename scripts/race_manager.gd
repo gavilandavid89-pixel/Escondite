@@ -63,7 +63,7 @@ func starter_ki_skill(race: String) -> String:
     return str(get_data(race).get("starter_ki", "saiyan_ki_burst"))
 
 func starter_skill(race: String) -> String:
-    # Kept as a compatibility alias for older tools. The actual game begins with punch only.
+    # Compatibility alias; the actual game begins with punch only.
     return starter_ki_skill(race)
 
 func allowed_skills(race: String) -> Array:
