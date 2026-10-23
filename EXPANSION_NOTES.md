@@ -35,6 +35,7 @@ Esta iteración toma ideas observables en el APK aportado por el usuario (mundo 
 - Jefe con recompensa persistente
 - Orbes distribuidos por el mundo
 
+
 ### Expansión de mundo 2
 Se añadieron Base del Ejército Red y Torre Sagrada; además de mobs regionales (jabalí, dinosaurio alfa, patrullas Red, comandantes glaciales, guardianes Namek y saqueadores galácticos), loot específico, misiones y bestiario ampliado.
 
@@ -48,6 +49,7 @@ Se añadieron Base del Ejército Red y Torre Sagrada; además de mobs regionales
 - El bestiario usa el catálogo real de mobs y el mundo registra zonas descubiertas.
 - Los sprites regionales actuales son arte original SVG; están separados del controlador de IA para poder sustituirlos después por sprites pixel-art animados.
 
+
 ## Power / Potential Stat Screen
 - No character levels.
 - All characters start at Power 10.
@@ -56,6 +58,7 @@ Se añadieron Base del Ejército Red y Torre Sagrada; además de mobs regionales
 - First upgrade of each stat costs 1 Potential; each later upgrade of that same stat costs one more than the previous upgrade.
 - Stat effects are wired into HP, physical damage, KI pool/damage, damage reduction, crit rolls, movement, KI regeneration and evasion.
 
+
 ### Balance recalibration
 Mob balance was reworked around Power as the master scale. Hand-tuned HP/damage values are no longer authoritative for combat; derived role profiles determine HP, attack and hidden combat stats. World spawn difficulty no longer multiplies mob stats from the player's current Power, preventing a high-Power player from accidentally turning a fixed boss into a giant stat sponge.
 
@@ -63,6 +66,7 @@ Mob balance was reworked around Power as the master scale. Hand-tuned HP/damage 
 La progresión de técnicas deja de usar rangos 1-5 y pasa a 1-10. El coste base es 5.000 POT para desbloquear y luego 10.000 / 25.000 / 60.000 / 100.000 / 160.000 / 250.000 / 500.000 / 1.250.000 / 2.000.000 POT por objetivo de rango. Cada técnica aplica un multiplicador de dificultad propio; se ponderan daño base, control, curación, buffs y transformaciones. Esto hace que una técnica de transformación con sustain, como Super Saiyan, sea mucho más cara que una ráfaga básica.
 
 Cada skill mantiene una carpeta visual independiente en `assets/skills/effects/` y la escena `scenes/skills/skill_presentation.tscn` funciona como plantilla para futuras animaciones pixel-art.
+
 
 ## Selección y ejecución de habilidades
 - Un toque selecciona una habilidad.

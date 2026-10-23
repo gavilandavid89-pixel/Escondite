@@ -95,6 +95,7 @@ Razas actuales:
 ### Estadísticas y Potencial
 Los personajes no tienen niveles. Todos empiezan con Poder 10. El Potencial acumulado puede gastarse en nueve atributos: Vida, Ataque, KI, Armadura, Crítico %, Daño crítico %, Velocidad, Regeneración KI y Evasión %. Cada atributo tiene un coste independiente: la primera mejora cuesta 1 Potencial, la segunda 2, la tercera 3 y así sucesivamente. Las compras afectan el combate y se guardan en la partida.
 
+
 ## Combat scale (Power-based)
 
 - Characters have no levels; **Power** is the main combat scale.

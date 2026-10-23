@@ -14,6 +14,7 @@ Antes de incluir recursos externos en una versión publicada se debe conservar l
 OpenGameArt: "50+ Monsters Pack 2D" — CC0. Se revisó como referencia para variedad de siluetas; el paquete no forma parte de esta build porque los sprites actuales son originales/procedurales.
 Fuente: https://opengameart.org/content/50-monsters-pack-2d
 
+
 ## Data de referencia del APK / estilo de juego
 - DataNRO expone estructuras de datos para mapas, mobs, NPCs y habilidades de Ngoc Rong Online; se usa como referencia conceptual de cómo separar contenido, no como recurso copiado al proyecto.
 - https://github.com/ElectroHeavenVN/DataNRO
