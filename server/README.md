@@ -1,22 +1,24 @@
-# Dragon Realm — servidor de desarrollo
+# Dragon Realm development server
 
-Servidor TCP mínimo para probar presencia multijugador, movimiento, chat y persistencia local.
-
-## Requisitos
-
-- Python 3.10 o superior
-- Sin dependencias externas
+Servidor TCP sencillo para probar presencia, movimiento, chat y persistencia básica de personaje.
 
 ## Ejecutar
 
-Desde la carpeta raíz del proyecto:
+```bash
+python3 server.py
+```
 
-    python3 server/server.py
+Escucha en `0.0.0.0:4010` y crea `dragon_realm.db` automáticamente.
 
-El servidor escucha en el puerto TCP 4010. Para probar desde otro dispositivo de la red local, configura en el cliente la IP LAN del equipo que ejecuta el servidor.
+## Protocolo actual
 
-## Protocolo
+- `AUTH`: identifica al personaje y recupera Poder/zona/posición/Zeni guardados.
+- `MOVE`: actualiza posición y zona con límites básicos.
+- `CHAT`: retransmite mensajes del canal.
+- `PING`: responde `PONG`.
+- `ACTION`: relay experimental.
+- `STATE`: snapshot de jugadores cada 100 ms.
 
-Los mensajes son objetos JSON, uno por línea. Los tipos implementados son AUTH, MOVE, CHAT, PING y ACTION. El servidor responde con WELCOME, AUTH_OK, STATE y PONG, y emite eventos de presencia, chat y acciones.
+## Estado de producción
 
-Este servidor es una base de desarrollo, no un backend de producción: antes de publicar hacen falta autenticación segura, validación autoritativa del estado, límites de frecuencia, TLS y gestión de sesiones.
+Esto sigue siendo un servidor de desarrollo. Antes de exponerlo públicamente deben añadirse TLS, autenticación real, sesiones/tokens, validación autoritativa de movimiento y combate, límites por paquete, rate limit, moderación, backups, migraciones y observabilidad.
