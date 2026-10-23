@@ -70,7 +70,7 @@ func derived_stats(id: String, data: Dictionary = {}) -> Dictionary:
     var max_hp := maxi(1, int(round(float(power) * hp_mult)))
     var attack := maxi(1, int(round(float(power) * attack_mult)))
     var armor_rating := maxi(1, int(round((sqrt(float(power)) * 4.0 + float(power) * 0.0015) * armor_mult)))
-    var ki := maxi(1, int(round(float(power) * ki_mult))
+    var ki := maxi(1, int(round(float(power) * ki_mult)))
     crit_chance += minf(5.0, log(float(power) + 1.0) * 0.65)
     dodge += minf(3.0, log(float(power) + 1.0) * 0.30)
     return {"role":role,"power":power,"hp":max_hp,"attack":attack,"armor_rating":armor_rating,"ki_power":ki,"crit_chance":clampf(crit_chance,1.0,15.0),"crit_damage":crit_damage,"dodge_chance":clampf(dodge,1.0,10.0),"speed":float(data.get("speed",100.0))}
