@@ -77,7 +77,6 @@ func _get_arg_prefix(prefix: String) -> String:
 			return value.trim_prefix(prefix)
 	return ""
 
-
 func _open_stats_preview() -> void:
 	if world != null and is_instance_valid(world) and world.hud != null:
 		world.hud.open_named_menu("estadisticas")
@@ -86,7 +85,6 @@ func _open_stats_preview() -> void:
 		if world != null and is_instance_valid(world) and world.hud != null:
 			world.hud.open_named_menu("estadisticas")
 		_capture_stats_preview()
-
 
 func _open_skill_preview() -> void:
 	for _i in range(24):
@@ -113,7 +111,6 @@ func _capture_stats_preview() -> void:
 func _create_menu() -> void:
 	overlay=Control.new(); overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT); add_child(overlay)
 	var bg:=ColorRect.new(); bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT); bg.color=Color("#0a1326"); bg.mouse_filter=Control.MOUSE_FILTER_IGNORE; overlay.add_child(bg)
-	# decorative energy circles
 	var art:=ColorRect.new(); art.position=Vector2(0,450); art.size=Vector2(1280,270); art.color=Color("#142b3c"); art.mouse_filter=Control.MOUSE_FILTER_IGNORE; overlay.add_child(art)
 	var title:=Label.new(); title.text="DRAGON BALL\nDRAGON REALM"; title.position=Vector2(70,80); title.size=Vector2(600,170); title.add_theme_font_size_override("font_size",52); title.add_theme_color_override("font_color",Color("#ffe37a")); title.add_theme_color_override("font_shadow_color",Color(0,0,0,0.7)); title.add_theme_constant_override("shadow_offset_x",4); title.add_theme_constant_override("shadow_offset_y",4); overlay.add_child(title)
 	var sub:=Label.new(); sub.text="Crónicas del guerrero • RPG 2D • 14 zonas • 21+ mobs • 5 razas"; sub.position=Vector2(76,260); sub.size=Vector2(520,40); sub.add_theme_font_size_override("font_size",21); sub.add_theme_color_override("font_color",Color("#8fd2ff")); overlay.add_child(sub)
@@ -122,7 +119,7 @@ func _create_menu() -> void:
 	var nl:=Label.new(); nl.text="Nombre"; nl.position=Vector2(38,90); nl.size=Vector2(160,30); nl.add_theme_font_size_override("font_size",14); card.add_child(nl)
 	name_edit=LineEdit.new(); name_edit.text=GameState.player_name; name_edit.position=Vector2(38,120); name_edit.size=Vector2(374,46); name_edit.placeholder_text="Tu guerrero"; card.add_child(name_edit)
 	var rl:=Label.new(); rl.text="Raza inicial"; rl.position=Vector2(38,186); rl.size=Vector2(160,30); rl.add_theme_font_size_override("font_size",14); card.add_child(rl)
-	race_option=OptionButton.new(); race_option.position=Vector2(38,216); race_option.size=Vector2(374,44);
+	race_option=OptionButton.new(); race_option.position=Vector2(38,216); race_option.size=Vector2(374,44)
 	for race_name in RaceManager.names():
 		race_option.add_item(race_name)
 	card.add_child(race_option)
@@ -175,7 +172,6 @@ func _run_race_test() -> void:
 		for id in SkillManager.SKILLS.keys():
 			if str(SkillManager.data(str(id)).get("race","")) not in [race, "Universal"] and SkillManager.can_learn(str(id)):
 				failures.append("illegal_%s_%s" % [race,id])
-	# KI must remain locked until five unique missions are complete.
 	GameState.reset_new_game()
 	RaceManager.set_race_defaults("Saiyan", false)
 	QuestManager.reset()
@@ -192,7 +188,6 @@ func _run_race_test() -> void:
 	var before_pot := GameState.potential_points
 	if not SkillManager.upgrade("galick_gun"): failures.append("skill_upgrade")
 	if GameState.potential_points >= before_pot or SkillManager.rank("galick_gun") != 2: failures.append("skill_upgrade_result")
-	# Power and potential are independent of level.
 	var old_power := GameState.power
 	var gain := GameState.calculate_hit_gain(18, 100, 500)
 	GameState.gain_power(gain, gain)
