@@ -879,6 +879,9 @@ func _run_self_test() -> void:
 	if enemies.size() > 0:
 		var hit_enemy: DBEnemy = enemies[0]
 		hit_enemy.hp = min(hit_enemy.max_hp, 80)
+		# The self-test asserts reward plumbing, not random evasion. Disable
+		# dodge on this controlled target so CI cannot fail on a lucky roll.
+		hit_enemy.mob_dodge_chance = 0.0
 		var power_before_hit := GameState.power
 		var pot_before_hit := GameState.potential_points
 		var actual_hit: int = hit_enemy.take_damage(12, Vector2.ZERO, 0.0)
