@@ -77,8 +77,8 @@ PYSCENES
     echo "[EDITOR] Opening scene $scene_path"
     env DISPLAY="$x_display" xdotool key --clearmodifiers ctrl+o
     sleep 0.7
-    env DISPLAY="$x_display" xdotool key --clearmodifiers ctrl+l
-    env DISPLAY="$x_display" xdotool type --clearmodifiers --delay 1 "$PROJECT_DIR/$scene_path"
+    env DISPLAY="$x_display" xdotool key --clearmodifiers ctrl+l ctrl+a
+    env DISPLAY="$x_display" xdotool type --clearmodifiers --delay 1 "res://$scene_path"
     env DISPLAY="$x_display" xdotool key Return
     sleep 2
     env DISPLAY="$x_display" xdotool key --clearmodifiers ctrl+F1
