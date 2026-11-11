@@ -31,7 +31,7 @@ def parse_scene(path: Path) -> dict:
             "name": attrs["name"],
             "type": attrs.get("type", ""),
             "parent": path_value,
-            "node_path": attrs["name"] if path_value == "." else path_value + "/" + attrs["name"],
+            "node_path": "." if path_value == "." else path_value + "/" + attrs["name"],
             "instance": attrs.get("instance", ""),
             "groups": [],
             "script": "",
