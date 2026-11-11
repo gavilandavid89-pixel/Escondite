@@ -12,8 +12,9 @@ mkdir -p "$OUTPUT_DIR"
 export GODOT_BIN PROJECT_DIR OUTPUT_DIR SCREEN_SIZE EDITOR_WAIT GAME_WAIT
 
 xvfb-run -a -s "-screen 0 ${SCREEN_SIZE}x24" bash -euo pipefail -c '
-  export DISPLAY="${DISPLAY:-:99}"
-  echo "[EDITOR] Using display $DISPLAY"
+  x_display="${DISPLAY:-:99}"
+  export DISPLAY="$x_display"
+  echo "[EDITOR] Using display $x_display"
   openbox >/dev/null 2>&1 &
   wm_pid=$!
   editor_pid=""
@@ -37,23 +38,23 @@ xvfb-run -a -s "-screen 0 ${SCREEN_SIZE}x24" bash -euo pipefail -c '
   ffmpeg -y -loglevel error -f x11grab -video_size "$SCREEN_SIZE" -i "$DISPLAY" -frames:v 1 "$OUTPUT_DIR/editor-only.png"
 
   # 2D workspace and the scene tree/Inspector docks.
-  env DISPLAY="$DISPLAY" xdotool key --clearmodifiers ctrl+F1
+  env DISPLAY="$x_display" xdotool key --clearmodifiers ctrl+F1
   sleep 2
   ffmpeg -y -loglevel error -f x11grab -video_size "$SCREEN_SIZE" -i "$DISPLAY" -frames:v 1 "$OUTPUT_DIR/editor-2d-workspace.png"
 
   # Open the main script through Godot's Quick Open Script dialog.
-  env DISPLAY="$DISPLAY" xdotool key --clearmodifiers ctrl+alt+o
+  env DISPLAY="$x_display" xdotool key --clearmodifiers ctrl+alt+o
   sleep 1
-  env DISPLAY="$DISPLAY" xdotool type --clearmodifiers --delay 2 "res://scripts/main.gd"
-  env DISPLAY="$DISPLAY" xdotool key Return
+  env DISPLAY="$x_display" xdotool type --clearmodifiers --delay 2 "res://scripts/main.gd"
+  env DISPLAY="$x_display" xdotool key Return
   sleep 3
   ffmpeg -y -loglevel error -f x11grab -video_size "$SCREEN_SIZE" -i "$DISPLAY" -frames:v 1 "$OUTPUT_DIR/editor-script-main.png"
 
   # Save visible Output and Debugger panels as separate evidence.
-  env DISPLAY="$DISPLAY" xdotool key --clearmodifiers alt+o
+  env DISPLAY="$x_display" xdotool key --clearmodifiers alt+o
   sleep 2
   ffmpeg -y -loglevel error -f x11grab -video_size "$SCREEN_SIZE" -i "$DISPLAY" -frames:v 1 "$OUTPUT_DIR/editor-output-panel.png"
-  env DISPLAY="$DISPLAY" xdotool key --clearmodifiers alt+d
+  env DISPLAY="$x_display" xdotool key --clearmodifiers alt+d
   sleep 2
   ffmpeg -y -loglevel error -f x11grab -video_size "$SCREEN_SIZE" -i "$DISPLAY" -frames:v 1 "$OUTPUT_DIR/editor-debugger-panel.png"
 
@@ -73,10 +74,10 @@ PYSCENES
   for scene_path in "${scene_paths[@]}"; do
     scene_slug=$(printf "%s" "$scene_path" | tr '/.' '__')
     echo "[EDITOR] Opening scene $scene_path"
-    env DISPLAY="$DISPLAY" xdotool key --clearmodifiers ctrl+shift+o
+    env DISPLAY="$x_display" xdotool key --clearmodifiers ctrl+shift+o
     sleep 0.6
-    env DISPLAY="$DISPLAY" xdotool type --clearmodifiers --delay 1 "res://$scene_path"
-    env DISPLAY="$DISPLAY" xdotool key Return
+    env DISPLAY="$x_display" xdotool type --clearmodifiers --delay 1 "res://$scene_path"
+    env DISPLAY="$x_display" xdotool key Return
     sleep 2
     ffmpeg -y -loglevel error -f x11grab -video_size "$SCREEN_SIZE" -i "$DISPLAY" -frames:v 1 "$OUTPUT_DIR/scenes/$scene_slug.png"
   done
