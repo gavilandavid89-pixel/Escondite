@@ -85,7 +85,8 @@ func _process_command(command: Dictionary, command_id: String) -> void:
 			selected = root.get_node_or_null(requested_path)
 			if selected != null:
 				break
-			var candidate := root.find_child(requested_path.get_concatenated_names().get(requested_path.get_concatenated_names().size() - 1) if requested_path.get_concatenated_names().size() > 0 else node_path, true, false)
+			var last_name := requested_path.get_name(requested_path.get_name_count() - 1) if requested_path.get_name_count() > 0 else StringName(node_path)
+			var candidate := root.find_child(last_name, true, false)
 			if candidate != null and str(root.get_path_to(candidate)) == node_path:
 				selected = candidate
 				break
