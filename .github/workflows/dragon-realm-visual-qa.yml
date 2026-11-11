@@ -1,0 +1,108 @@
+name: Dragon Realm Visual QA
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/dragon-realm-visual-qa.yml"
+      - "scripts/ci/capture_visuals.sh"
+      - "project.godot"
+      - "Main.tscn"
+      - "scripts/**"
+      - "scenes/**"
+      - "assets/**"
+      - "addons/**"
+      - "tests/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dragon-realm-visual-qa-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-and-capture:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Checkout Dragon Realm
+        uses: actions/checkout@v4
+
+      - name: Install visual test dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb openbox ffmpeg unzip curl
+
+      - name: Install pinned Godot 4.7.2
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/godot"
+          cd "$RUNNER_TEMP/godot"
+          curl -fsSL "https://github.com/godotengine/godot-builds/releases/download/4.7.2-stable/Godot_v4.7.2-stable_linux.x86_64.zip" -o godot.zip
+          curl -fsSL "https://github.com/godotengine/godot-builds/releases/download/4.7.2-stable/SHA512-SUMS.txt" -o SHA512-SUMS.txt
+          grep -F "Godot_v4.7.2-stable_linux.x86_64.zip" SHA512-SUMS.txt | sha512sum --check -
+          unzip -q godot.zip
+          mv Godot_v4.7.2-stable_linux.x86_64 godot
+          chmod +x godot
+          echo "$RUNNER_TEMP/godot" >> "$GITHUB_PATH"
+          ./godot --version
+
+      - name: Import project and validate scripts
+        run: godot --headless --audio-driver Dummy --editor --path . --quit
+
+      - name: Run world integration test
+        run: godot --headless --audio-driver Dummy --path . -- --self-test
+
+      - name: Run race and skill gate test
+        run: godot --headless --audio-driver Dummy --path . -- --race-test
+
+      - name: Run regression suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          for test in \
+            tests/race_regression.gd \
+            tests/skill_combat_regression.gd \
+            tests/skill_progression_regression.gd \
+            tests/skill_selection_barrier_regression.gd \
+            tests/stats_regression.gd \
+            tests/mob_balance_regression.gd \
+            tests/vfx_integration_regression.gd
+          do
+            echo "::group::$test"
+            godot --headless --audio-driver Dummy --path . --script "$test"
+            echo "::endgroup::"
+          done
+
+      - name: Capture menu and gameplay views
+        env:
+          GODOT_BIN: godot
+          PROJECT_DIR: ${{ github.workspace }}
+          OUTPUT_DIR: ${{ runner.temp }}/dragon-realm-visuals
+          CAPTURE_DELAY: "3"
+        run: bash scripts/ci/capture_visuals.sh
+
+      - name: Upload visual evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dragon-realm-visual-qa-${{ github.sha }}
+          path: ${{ runner.temp }}/dragon-realm-visuals/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Write run summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## Dragon Realm automated visual QA"
+            echo
+            echo "- Commit: `$GITHUB_SHA`"
+            echo "- Engine: Godot 4.7.2 stable"
+            echo "- Captures: menu, Valle Azul, Ciudad Capsule, Pantanos de Namek"
+            echo "- Evidence: workflow artifact `dragon-realm-visual-qa-$GITHUB_SHA`"
+          } >> "$GITHUB_STEP_SUMMARY"
