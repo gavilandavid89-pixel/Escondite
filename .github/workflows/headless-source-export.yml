@@ -1,0 +1,34 @@
+name: Export Dragon Realm source for Headless
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/headless-source-export.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Create source snapshot
+        shell: bash
+        run: |
+          mkdir -p export
+          git archive --format=tar HEAD | gzip -9 > export/dragon-realm-source.tar.gz
+          sha256sum export/dragon-realm-source.tar.gz > export/SHA256SUMS
+          printf 'Repository: %s\nCommit: %s\nBranch: %s\n' "$GITHUB_REPOSITORY" "$GITHUB_SHA" "$GITHUB_REF_NAME" > export/REVISION.txt
+      - name: Upload source snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: dragon-realm-headless-source
+          path: export/
+          retention-days: 7
+          if-no-files-found: error
