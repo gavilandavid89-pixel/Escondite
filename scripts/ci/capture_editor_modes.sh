@@ -86,37 +86,38 @@ ffmpeg -y -loglevel error -f x11grab -video_size "$SCREEN_SIZE" -i "$DISPLAY" -f
 
 # The plugin opens each scene through EditorInterface and selects every node
 # so screenshots show the actual Scene dock and Inspector selection.
-python3 - "$OUTPUT_DIR/project-inspection.json" "$OUTPUT_DIR/scene-node-commands.tsv" <<'PYCOMMANDS'
+python3 - "$OUTPUT_DIR/project-inspection.json" "$OUTPUT_DIR/scene-node-commands.tsv" "$OUTPUT_DIR/scene-node-commands.jsonl" <<'PYCOMMANDS'
 import json,sys
 data=json.load(open(sys.argv[1],encoding="utf-8"))
-with open(sys.argv[2],"w",encoding="utf-8") as out:
+with open(sys.argv[2],"w",encoding="utf-8") as tsv, open(sys.argv[3],"w",encoding="utf-8") as commands:
+  index=0
   for scene in data.get("scenes",[]):
       path=scene.get("path","")
       if not path.endswith(".tscn"): continue
-      # Capture the scene root once, then every child node. An empty path is
-      # ambiguous in Godot; "." explicitly means the edited scene root.
-      out.write(path+"|.\n")
-      for node in scene.get("nodes",[]):
-          node_path=node.get("node_path","")
-          if node_path == ".": continue
-          out.write(path+"|"+node_path+"\n")
+      nodes=[(".",)] + [(n.get("node_path",""),) for n in scene.get("nodes",[]) if n.get("node_path") not in ("", ".")]
+      for (node_path,) in nodes:
+          index += 1
+          command={"id":f"inspect-{index}","scene":"res://"+path,"node_path":node_path}
+          tsv.write(path+"|"+node_path+"\\n")
+          commands.write(json.dumps(command,ensure_ascii=False)+"\\n")
 PYCOMMANDS
-test -s "$OUTPUT_DIR/scene-node-commands.tsv"
-command_total=$(wc -l < "$OUTPUT_DIR/scene-node-commands.tsv")
+test -s "$OUTPUT_DIR/scene-node-commands.jsonl"
+command_total=$(wc -l < "$OUTPUT_DIR/scene-node-commands.jsonl")
 echo "[EDITOR] Queued $command_total scene/node inspections"
 
-command_index=0
-while IFS='|' read -r scene_path node_path; do
-  [ -n "$scene_path" ] || continue
-  command_index=$((command_index + 1))
-  command_id="inspect-$command_index"
-  scene_slug=$(printf "%s" "$scene_path" | tr '/.' '__')
-  node_slug=$(printf "%s" "${node_path:-root}" | tr '/ ' '__')
+# Consume complete JSON records instead of splitting paths on shell delimiters.
+# The exact JSON bytes are atomically handed to the editor plugin.
+while IFS= read -r command_json; do
+  [ -n "$command_json" ] || continue
+  command_id=$(python3 -c 'import json,sys; print(json.loads(sys.argv[1])["id"])' "$command_json")
+  scene_path=$(python3 -c 'import json,sys; print(json.loads(sys.argv[1])["scene"])' "$command_json")
+  node_path=$(python3 -c 'import json,sys; print(json.loads(sys.argv[1])["node_path"])' "$command_json")
+  case "$scene_path" in
+    res://*.tscn) ;;
+    *) echo "[EDITOR] Invalid scene path in command $command_id: <$scene_path>" >&2; exit 1 ;;
+  esac
   command_tmp="$command_file.tmp"
-  python3 - "$command_id" "$scene_path" "$node_path" "$command_tmp" <<'PYWRITE'
-import json,sys
-json.dump({"id":sys.argv[1],"scene":"res://"+sys.argv[2],"node_path":sys.argv[3]},open(sys.argv[4],"w",encoding="utf-8"))
-PYWRITE
+  printf '%s\\n' "$command_json" > "$command_tmp"
   mv "$command_tmp" "$command_file"
   ready=0
   for attempt in $(seq 1 40); do
@@ -129,6 +130,9 @@ PYWRITE
     tail -80 "$OUTPUT_DIR/editor.log" >&2
     exit 1
   fi
+  scene_rel="${scene_path#res://}"
+  scene_slug=$(printf "%s" "$scene_rel" | tr '/.' '__')
+  node_slug=$(printf "%s" "${node_path:-root}" | tr '/ ' '__')
   if [ "$node_path" = "." ]; then
     screenshot="$OUTPUT_DIR/scenes/$scene_slug.png"
   else
@@ -136,7 +140,7 @@ PYWRITE
   fi
   mkdir -p "$(dirname "$screenshot")"
   ffmpeg -y -loglevel error -f x11grab -video_size "$SCREEN_SIZE" -i "$DISPLAY" -frames:v 1 "$screenshot"
-done < "$OUTPUT_DIR/scene-node-commands.tsv"
+done < "$OUTPUT_DIR/scene-node-commands.jsonl"
 
 verified_total=$(grep -c "\[DRAGON_INSPECTOR\] VERIFIED id=inspect-" "$OUTPUT_DIR/editor.log" || true)
 [ "$verified_total" -eq "$command_total" ] || { echo "Verified $verified_total of $command_total scene/node inspections" >&2; exit 1; }
