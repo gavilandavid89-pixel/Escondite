@@ -56,7 +56,6 @@ xvfb-run -a -s "-screen 0 ${SCREEN_SIZE}x24" bash -euo pipefail -c '
   sleep 2
   ffmpeg -y -loglevel error -f x11grab -video_size "$SCREEN_SIZE" -i "$DISPLAY" -frames:v 1 "$OUTPUT_DIR/editor-output-panel.png"
   env DISPLAY="$x_display" xdotool key --clearmodifiers alt+d
-  env DISPLAY="$x_display" xdotool key --clearmodifiers shift+F12
   sleep 2
   ffmpeg -y -loglevel error -f x11grab -video_size "$SCREEN_SIZE" -i "$DISPLAY" -frames:v 1 "$OUTPUT_DIR/editor-debugger-panel.png"
 
@@ -76,12 +75,16 @@ PYSCENES
   for scene_path in "${scene_paths[@]}"; do
     scene_slug=$(printf "%s" "$scene_path" | tr '/.' '__')
     echo "[EDITOR] Opening scene $scene_path"
-    env DISPLAY="$x_display" xdotool key --clearmodifiers ctrl+shift+o
-    sleep 0.6
-    scene_name="${scene_path##*/}"
-    env DISPLAY="$x_display" xdotool type --clearmodifiers --delay 1 "$scene_name"
+    env DISPLAY="$x_display" xdotool key --clearmodifiers ctrl+o
+    sleep 0.7
+    env DISPLAY="$x_display" xdotool key --clearmodifiers ctrl+l
+    env DISPLAY="$x_display" xdotool type --clearmodifiers --delay 1 "$PROJECT_DIR/$scene_path"
     env DISPLAY="$x_display" xdotool key Return
     sleep 2
+    env DISPLAY="$x_display" xdotool key --clearmodifiers ctrl+F1
+    sleep 1
+    env DISPLAY="$x_display" xdotool mousemove 70 215 click 1
+    sleep 0.5
     ffmpeg -y -loglevel error -f x11grab -video_size "$SCREEN_SIZE" -i "$DISPLAY" -frames:v 1 "$OUTPUT_DIR/scenes/$scene_slug.png"
   done
 
