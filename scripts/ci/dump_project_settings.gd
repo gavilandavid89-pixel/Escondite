@@ -7,6 +7,24 @@ func _initialize() -> void:
 		quit(2)
 		return
 
+	# Cross-check the scene parser in a fresh headless process before the
+	# graphical editor test. This isolates editor state from resource parsing.
+	var enemy_source := FileAccess.get_file_as_string("res://scenes/enemies/enemy.tscn")
+	var enemy_scene := ResourceLoader.load("res://scenes/enemies/enemy.tscn", "PackedScene", ResourceLoader.CACHE_MODE_IGNORE) as PackedScene
+	if enemy_scene == null:
+		print("[INSPECT_SCENE_PROBE] load_failed source_bytes=%d" % enemy_source.length())
+	else:
+		var enemy_state := enemy_scene.get_state()
+		var enemy_instance := enemy_scene.instantiate()
+		print("[INSPECT_SCENE_PROBE] source_bytes=%d source_node_declarations=%d packed_state_nodes=%d instantiated_children=%d child_names=%s" % [
+			enemy_source.length(),
+			enemy_source.count("[node name="),
+			enemy_state.get_node_count(),
+			enemy_instance.get_child_count(),
+			JSON.stringify(enemy_instance.get_children().map(func(child): return str(child.name)))
+		])
+		enemy_instance.free()
+
 	var rows: Array[Dictionary] = []
 	for property in ProjectSettings.get_property_list():
 		var setting_name := String(property.get("name", ""))
