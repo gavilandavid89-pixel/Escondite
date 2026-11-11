@@ -5,7 +5,7 @@ size = Vector2(42, 66)
 [node name="Enemy" type="CharacterBody2D"]
 script = ExtResource("1")
 collision_layer = 4
-collision_mask = 1 | 2
+collision_mask = 3
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 position = Vector2(0, 5)
 shape = SubResource("1")
