@@ -36,10 +36,7 @@ func _poll_command() -> void:
 	if scene_path.is_empty():
 		push_error("[DRAGON_INSPECTOR] %s missing scene path" % command_id)
 		return
-	var error := EditorInterface.open_scene_from_path(scene_path)
-	if error != OK:
-		push_error("[DRAGON_INSPECTOR] %s open_failed scene=%s error=%s" % [command_id, scene_path, error_string(error)])
-		return
+	EditorInterface.open_scene_from_path(scene_path)
 
 	await get_tree().process_frame
 	await get_tree().process_frame
@@ -59,7 +56,7 @@ func _poll_command() -> void:
 
 	var selection := EditorInterface.get_selection()
 	selection.clear()
-	selection.add_node(selected)
+	EditorInterface.edit_node(selected)
 	await get_tree().process_frame
 	if not selection.get_selected_nodes().has(selected):
 		push_error("[DRAGON_INSPECTOR] %s selection_failed scene=%s node=%s" % [command_id, scene_path, node_path])
