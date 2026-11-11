@@ -101,6 +101,7 @@ func _process_command(command: Dictionary, command_id: String) -> void:
 	for source_line in scene_source.split("\\n"):
 		if str(source_line).begins_with("[node "):
 			declared_node_lines.append(str(source_line))
+	print("[DRAGON_INSPECTOR] SOURCE_FILE id=%s scene=%s bytes=%d head=%s" % [command_id, scene_path, scene_source.length(), JSON.stringify(scene_source.substr(0, 320))])
 	print("[DRAGON_INSPECTOR] SOURCE_NODES id=%s scene=%s count=%d declarations=%s" % [
 		command_id, scene_path, declared_node_lines.size(), JSON.stringify(declared_node_lines)
 	])
