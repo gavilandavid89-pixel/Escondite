@@ -48,6 +48,14 @@ func _poll_command() -> void:
 		_process_command(command, command_id)
 		return
 
+func _scene_tree_signature(node: Node, prefix: String = ".") -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for child in node.get_children():
+		var child_path := child.name if prefix == "." else prefix + "/" + str(child.name)
+		result.append({"path": child_path, "type": child.get_class()})
+		result.append_array(_scene_tree_signature(child, child_path))
+	return result
+
 func _process_command(command: Dictionary, command_id: String) -> void:
 	var scene_path := str(command.get("scene", ""))
 	var node_path := str(command.get("node_path", "."))
@@ -57,18 +65,51 @@ func _process_command(command: Dictionary, command_id: String) -> void:
 		_processing_command = false
 		return
 
-	EditorInterface.open_scene_from_path(scene_path)
-	# Wait for the requested scene root to become active in the editor.
-	var root: Node
-	for frame in range(120):
-		await get_tree().process_frame
-		root = EditorInterface.get_edited_scene_root()
-		if root != null and root.scene_file_path == scene_path:
-			break
+	# Do not reopen the already active scene: open_scene_from_path can be a
+	# no-op for the current tab, and matching scene_file_path alone is not a
+	# reliable signal that a newly requested load has completed.
+	var root := EditorInterface.get_edited_scene_root()
+	if root == null or root.scene_file_path != scene_path:
+		EditorInterface.open_scene_from_path(scene_path)
+		root = null
+		for frame in range(120):
+			await get_tree().process_frame
+			root = EditorInterface.get_edited_scene_root()
+			if root != null and root.scene_file_path == scene_path:
+				break
 	if root == null or root.scene_file_path != scene_path:
 		push_error("[DRAGON_INSPECTOR] %s scene_open_timeout expected=%s actual=%s" % [command_id, scene_path, str(root.scene_file_path if root != null else "<null>")])
 		_processing_command = false
 		return
+
+	# Independently instantiate the serialized PackedScene and compare its
+	# hierarchy against the live Scene dock root before trusting node lookup.
+	var packed := load(scene_path) as PackedScene
+	if packed == null:
+		push_error("[DRAGON_INSPECTOR] %s packed_scene_load_failed scene=%s" % [command_id, scene_path])
+		_processing_command = false
+		return
+	var reference_root := packed.instantiate()
+	if reference_root == null:
+		push_error("[DRAGON_INSPECTOR] %s packed_scene_instantiate_failed scene=%s" % [command_id, scene_path])
+		_processing_command = false
+		return
+	var expected_tree := _scene_tree_signature(reference_root)
+	var live_tree := _scene_tree_signature(root)
+	var expected_root_type := reference_root.get_class()
+	var live_root_type := root.get_class()
+	var expected_root_name := str(reference_root.name)
+	var live_root_name := str(root.name)
+	reference_root.free()
+	if expected_root_type != live_root_type or expected_root_name != live_root_name or expected_tree != live_tree:
+		print("[DRAGON_INSPECTOR] TREE_MISMATCH id=%s scene=%s expected_root=%s:%s live_root=%s:%s expected_children=%s live_children=%s" % [
+			command_id, scene_path, expected_root_name, expected_root_type,
+			live_root_name, live_root_type, JSON.stringify(expected_tree), JSON.stringify(live_tree)
+		])
+		push_error("[DRAGON_INSPECTOR] %s live_scene_tree_differs_from_packed_scene scene=%s" % [command_id, scene_path])
+		_processing_command = false
+		return
+	print("[DRAGON_INSPECTOR] TREE_MATCH id=%s scene=%s descendants=%d" % [command_id, scene_path, expected_tree.size()])
 
 	EditorInterface.set_main_screen_editor("2D")
 	await get_tree().process_frame
@@ -78,26 +119,11 @@ func _process_command(command: Dictionary, command_id: String) -> void:
 		selected = root
 	else:
 		var requested_path := NodePath(node_path)
-		# Scene instantiation can complete after the edited root becomes visible.
-		# Resolve the exact relative path repeatedly instead of treating a transient
-		# empty child list as a permanent missing-node error.
-		for frame in range(120):
-			selected = root.get_node_or_null(requested_path)
-			if selected != null:
-				break
-			var last_name := requested_path.get_name(requested_path.get_name_count() - 1) if requested_path.get_name_count() > 0 else StringName(node_path)
-			var candidate := root.find_child(last_name, true, false)
-			if candidate != null and str(root.get_path_to(candidate)) == node_path:
-				selected = candidate
-				break
-			await get_tree().process_frame
-
-	if selected == null:
-		var child_names := root.get_children().map(func(child): return child.name)
-		print("[DRAGON_INSPECTOR] ROOT_DIAGNOSTIC scene=%s root=%s path=%s children=%d child_names=%s" % [scene_path, root.name, node_path, root.get_child_count(), str(child_names)])
-		push_error("[DRAGON_INSPECTOR] %s node_not_found_after_wait scene=%s node=%s" % [command_id, scene_path, node_path])
-		_processing_command = false
-		return
+		selected = root.get_node_or_null(requested_path)
+		if selected == null:
+			push_error("[DRAGON_INSPECTOR] %s node_not_found_in_verified_tree scene=%s node=%s" % [command_id, scene_path, node_path])
+			_processing_command = false
+			return
 
 	var selection := EditorInterface.get_selection()
 	selection.clear()
