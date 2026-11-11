@@ -5,7 +5,9 @@ GODOT_BIN="${GODOT_BIN:-godot}"
 PROJECT_DIR="${PROJECT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
 OUTPUT_DIR="${OUTPUT_DIR:-${PROJECT_DIR}/artifacts/visual}"
 SCREEN_SIZE="${SCREEN_SIZE:-1440x900}"
-CAPTURE_DELAY="${CAPTURE_DELAY:-3}"
+GAME_SIZE="${GAME_SIZE:-1280x720}"
+CAPTURE_DELAY="${CAPTURE_DELAY:-4}"
+WINDOW_WAIT="${WINDOW_WAIT:-20}"
 
 mkdir -p "$OUTPUT_DIR"
 
@@ -24,13 +26,15 @@ capture_one() {
     log="$4"
     delay="$5"
     screen_size="$6"
-    shift 6
+    game_size="$7"
+    window_wait="$8"
+    shift 8
 
     openbox >/dev/null 2>&1 &
     wm_pid=$!
     sleep 1
 
-    "$godot_bin" --audio-driver Dummy --path "$project_dir" --rendering-method gl_compatibility -- "$@" >"$log" 2>&1 &
+    "$godot_bin" --audio-driver Dummy --path "$project_dir" --rendering-method gl_compatibility --windowed --resolution "$game_size" -- "$@" >"$log" 2>&1 &
     game_pid=$!
 
     cleanup() {
@@ -40,19 +44,41 @@ capture_one() {
     }
     trap cleanup EXIT INT TERM
 
+    window_id=""
+    for ((i=0; i<window_wait*2; i++)); do
+      window_id=$(xdotool search --onlyvisible --class Godot 2>/dev/null | head -n 1 || true)
+      if [ -n "$window_id" ]; then break; fi
+      if ! kill -0 "$game_pid" 2>/dev/null; then
+        echo "Godot exited before creating a visible window" >&2
+        cat "$log" >&2
+        exit 1
+      fi
+      sleep 0.5
+    done
+    if [ -z "$window_id" ]; then
+      echo "Timed out waiting for the Godot game window" >&2
+      cat "$log" >&2
+      exit 1
+    fi
+
+    xdotool windowmap "$window_id"
+    xdotool windowactivate --sync "$window_id" || true
+    wmctrl -ir "$window_id" -b remove,hidden,minimized || true
+    wmctrl -ir "$window_id" -e "0,80,80,1280,720" || true
     sleep "$delay"
+
     ffmpeg -y -loglevel error -f x11grab -video_size "$screen_size" -i "$DISPLAY" -frames:v 1 "$output"
     test -s "$output"
     bytes=$(wc -c < "$output")
     if [ "$bytes" -lt 10000 ]; then
-      echo "Screenshot is suspiciously small (${bytes} bytes): $output" >&2
+      echo "Screenshot is suspiciously small ($bytes bytes): $output" >&2
       exit 1
     fi
     if grep -E "SCRIPT ERROR|Parse Error|Invalid call" "$log"; then
       echo "Godot reported a script/runtime error while capturing $output" >&2
       exit 1
     fi
-  ' _ "$GODOT_BIN" "$PROJECT_DIR" "$output" "$log" "$CAPTURE_DELAY" "$SCREEN_SIZE" "$@"
+  ' _ "$GODOT_BIN" "$PROJECT_DIR" "$output" "$log" "$CAPTURE_DELAY" "$SCREEN_SIZE" "$GAME_SIZE" "$WINDOW_WAIT" "$@"
   echo "[VISUAL] Saved ${output}"
 }
 
