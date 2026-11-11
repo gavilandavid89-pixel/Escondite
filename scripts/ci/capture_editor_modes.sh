@@ -12,6 +12,8 @@ mkdir -p "$OUTPUT_DIR"
 export GODOT_BIN PROJECT_DIR OUTPUT_DIR SCREEN_SIZE EDITOR_WAIT GAME_WAIT
 
 xvfb-run -a -s "-screen 0 ${SCREEN_SIZE}x24" bash -euo pipefail -c '
+  export DISPLAY="${DISPLAY:-:99}"
+  echo "[EDITOR] Using display $DISPLAY"
   openbox >/dev/null 2>&1 &
   wm_pid=$!
   editor_pid=""
