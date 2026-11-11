@@ -24,12 +24,13 @@ editor_pid=""
 game_pid=""
 original_project="$OUTPUT_DIR/project.godot.original"
 cp "$PROJECT_DIR/project.godot" "$original_project"
-command_file="$OUTPUT_DIR/editor-inspector-command.json"
-export DRAGON_EDITOR_COMMAND_FILE="$command_file"
+command_dir="$OUTPUT_DIR/editor-commands"
+mkdir -p "$command_dir"
+export DRAGON_EDITOR_COMMAND_DIR="$command_dir"
 
 restore_project() {
   cp "$original_project" "$PROJECT_DIR/project.godot"
-  rm -f "$command_file"
+  rm -rf "$command_dir"
 }
 cleanup() {
   [ -z "$game_pid" ] || kill -TERM "$game_pid" 2>/dev/null || true
@@ -105,16 +106,17 @@ test -s "$OUTPUT_DIR/scene-node-commands.jsonl"
 command_total=$(wc -l < "$OUTPUT_DIR/scene-node-commands.jsonl")
 echo "[EDITOR] Queued $command_total scene/node inspections"
 
-# Consume each complete JSON record unchanged. Sequential filenames map to
-# scene-node-commands.tsv, avoiding shell parsing of resource paths entirely.
+# Each command gets a unique filename. This avoids stale reads when the
+# editor polls the queue on virtualized CI filesystems.
 command_index=0
 while IFS= read -r command_json; do
   [ -n "$command_json" ] || continue
   command_index=$((command_index + 1))
   command_id="inspect-$command_index"
-  command_tmp="$command_file.tmp"
+  command_tmp=$(printf "%s/%04d.json.tmp" "$command_dir" "$command_index")
+  command_ready=$(printf "%s/%04d.json" "$command_dir" "$command_index")
   printf '%s\n' "$command_json" > "$command_tmp"
-  mv "$command_tmp" "$command_file"
+  mv "$command_tmp" "$command_ready"
   ready=0
   for attempt in $(seq 1 40); do
     if grep -Fq "[DRAGON_INSPECTOR] VERIFIED id=$command_id " "$OUTPUT_DIR/editor.log"; then ready=1; break; fi
