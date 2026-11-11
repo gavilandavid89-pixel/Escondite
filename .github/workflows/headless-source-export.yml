@@ -5,6 +5,15 @@ on:
     branches: [main]
     paths:
       - ".github/workflows/headless-source-export.yml"
+      - "project.godot"
+      - "Main.tscn"
+      - "scripts/**"
+      - "scenes/**"
+      - "assets/**"
+      - "addons/**"
+      - "server/**"
+      - "tests/**"
+      - "*.md"
   workflow_dispatch:
 
 permissions:
