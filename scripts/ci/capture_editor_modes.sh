@@ -12,7 +12,7 @@ mkdir -p "$OUTPUT_DIR"
 export GODOT_BIN PROJECT_DIR OUTPUT_DIR SCREEN_SIZE EDITOR_WAIT GAME_WAIT
 
 if [ "${1:-}" != "--inside-xvfb" ]; then
-  exec xvfb-run -a -s "-screen 0 ${SCREEN_SIZE}x24" "$0" --inside-xvfb
+  exec xvfb-run -a -s "-screen 0 ${SCREEN_SIZE}x24" bash "$0" --inside-xvfb
 fi
 
 x_display="${DISPLAY:-:99}"
