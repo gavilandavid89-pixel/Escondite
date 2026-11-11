@@ -46,7 +46,7 @@ capture_one() {
 
     window_id=""
     for ((i=0; i<window_wait*2; i++)); do
-      window_id=$(xdotool search --onlyvisible --class Godot 2>/dev/null | head -n 1 || true)
+      window_id=$(xdotool search --onlyvisible --pid "$game_pid" 2>/dev/null | head -n 1 || true)
       if [ -n "$window_id" ]; then break; fi
       if ! kill -0 "$game_pid" 2>/dev/null; then
         echo "Godot exited before creating a visible window" >&2
