@@ -94,6 +94,9 @@ with open(sys.argv[2],"w",encoding="utf-8") as out:
         for node in scene.get("nodes",[]):
             out.write(path+"\t"+node.get("node_path","")+"\n")
 PYCOMMANDS
+  test -s "$OUTPUT_DIR/scene-node-commands.tsv"
+  command_total=$(wc -l < "$OUTPUT_DIR/scene-node-commands.tsv")
+  echo "[EDITOR] Queued $command_total scene/node inspections"
 
   command_index=0
   while IFS=$'\t' read -r scene_path node_path; do
@@ -110,7 +113,7 @@ PYWRITE
     mv "$command_tmp" "$command_file"
     ready=0
     for attempt in $(seq 1 40); do
-      if grep -Fq "[DRAGON_INSPECTOR] READY id=$command_id " "$OUTPUT_DIR/editor.log"; then ready=1; break; fi
+      if grep -Fq "[DRAGON_INSPECTOR] VERIFIED id=$command_id " "$OUTPUT_DIR/editor.log"; then ready=1; break; fi
       sleep 0.25
       kill -0 "$editor_pid"
     done
@@ -119,7 +122,7 @@ PYWRITE
       tail -80 "$OUTPUT_DIR/editor.log" >&2
       exit 1
     fi
-    if [ -z "$node_path" ]; then
+    if [ "$node_path" = "." ]; then
       screenshot="$OUTPUT_DIR/scenes/$scene_slug.png"
     else
       screenshot="$OUTPUT_DIR/nodes/$scene_slug--$node_slug.png"
@@ -127,6 +130,12 @@ PYWRITE
     mkdir -p "$(dirname "$screenshot")"
     ffmpeg -y -loglevel error -f x11grab -video_size "$SCREEN_SIZE" -i "$DISPLAY" -frames:v 1 "$screenshot"
   done < "$OUTPUT_DIR/scene-node-commands.tsv"
+
+  verified_total=$(grep -c "\[DRAGON_INSPECTOR\] VERIFIED id=inspect-" "$OUTPUT_DIR/editor.log" || true)
+  [ "$verified_total" -eq "$command_total" ] || { echo "Verified $verified_total of $command_total scene/node inspections" >&2; exit 1; }
+  scene_capture_total=$(find "$OUTPUT_DIR/scenes" -maxdepth 1 -type f -name "*.png" 2>/dev/null | wc -l)
+  node_capture_total=$(find "$OUTPUT_DIR/nodes" -type f -name "*.png" 2>/dev/null | wc -l)
+  echo "[EDITOR] Verified $verified_total commands; captured $scene_capture_total scene roots and $node_capture_total nodes"
 
   # Game preview floating above the editor, then fullscreen.
   echo "[EDITOR] Launching windowed game over editor"
