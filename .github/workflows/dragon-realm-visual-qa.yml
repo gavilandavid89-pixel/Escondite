@@ -5,10 +5,9 @@ on:
     branches: [main]
     paths:
       - ".github/workflows/dragon-realm-visual-qa.yml"
-      - "scripts/ci/capture_visuals.sh"
+      - "scripts/**"
       - "project.godot"
       - "Main.tscn"
-      - "scripts/**"
       - "scenes/**"
       - "assets/**"
       - "addons/**"
@@ -18,6 +17,7 @@ on:
 permissions:
   contents: read
 
+# Queue new inspections; never terminate an active run just because another commit arrives.
 concurrency:
   group: dragon-realm-visual-qa-${{ github.ref }}
   cancel-in-progress: false
@@ -25,7 +25,7 @@ concurrency:
 jobs:
   validate-and-capture:
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    timeout-minutes: 35
     steps:
       - name: Checkout Dragon Realm
         uses: actions/checkout@v4
@@ -56,7 +56,10 @@ jobs:
       - name: Build project and scene inspection bundle
         env:
           INSPECTION_DIR: ${{ runner.temp }}/dragon-realm-inspection
-        run: python3 scripts/ci/inspect_project.py . "$INSPECTION_DIR"
+          INSPECTION_OUTPUT: ${{ runner.temp }}/dragon-realm-inspection/project-settings-effective.json
+        run: |
+          python3 scripts/ci/inspect_project.py . "$INSPECTION_DIR"
+          godot --headless --audio-driver Dummy --path . --script scripts/ci/dump_project_settings.gd
 
       - name: Run world integration test
         run: godot --headless --audio-driver Dummy --path . -- --self-test
@@ -99,12 +102,14 @@ jobs:
           GAME_WAIT: "4"
         run: bash scripts/ci/capture_editor_modes.sh
 
-      - name: Upload visual evidence
+      - name: Upload visual and inspection evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: dragon-realm-visual-qa-${{ github.sha }}
-          path: |\n            ${{ runner.temp }}/dragon-realm-visuals/\n            ${{ runner.temp }}/dragon-realm-inspection/
+          path: |
+            ${{ runner.temp }}/dragon-realm-visuals/
+            ${{ runner.temp }}/dragon-realm-inspection/
           if-no-files-found: warn
           retention-days: 14
 
@@ -117,6 +122,7 @@ jobs:
             echo
             echo "- Commit: $GITHUB_SHA"
             echo "- Engine: Godot 4.7.2 stable"
-            echo "- Captures: menu, gameplay maps, Godot editor, windowed game over editor, fullscreen game\n            echo "- Inspection bundle: project settings, scene trees, GDScript source index, source files and runtime logs"
-            echo "- Evidence: workflow artifact dragon-realm-visual-qa-$GITHUB_SHA"
+            echo "- Captures: menu, gameplay maps, editor, windowed game over editor, fullscreen game"
+            echo "- Inspection: scene trees, project settings, effective settings, GDScript index and source copies"
+            echo "- Editor/runtime logs are included when generated."
           } >> "$GITHUB_STEP_SUMMARY"
