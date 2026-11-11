@@ -98,8 +98,8 @@ with open(sys.argv[2],"w",encoding="utf-8") as tsv, open(sys.argv[3],"w",encodin
       for (node_path,) in nodes:
           index += 1
           command={"id":f"inspect-{index}","scene":"res://"+path,"node_path":node_path}
-          tsv.write(path+"|"+node_path+"\\n")
-          commands.write(json.dumps(command,ensure_ascii=False)+"\\n")
+          tsv.write(path+"|"+node_path+"\n")
+          commands.write(json.dumps(command,ensure_ascii=False)+"\n")
 PYCOMMANDS
 test -s "$OUTPUT_DIR/scene-node-commands.jsonl"
 command_total=$(wc -l < "$OUTPUT_DIR/scene-node-commands.jsonl")
@@ -117,7 +117,7 @@ while IFS= read -r command_json; do
     *) echo "[EDITOR] Invalid scene path in command $command_id: <$scene_path>" >&2; exit 1 ;;
   esac
   command_tmp="$command_file.tmp"
-  printf '%s\\n' "$command_json" > "$command_tmp"
+  printf '%s\n' "$command_json" > "$command_tmp"
   mv "$command_tmp" "$command_file"
   ready=0
   for attempt in $(seq 1 40); do
