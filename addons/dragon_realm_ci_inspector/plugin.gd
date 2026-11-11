@@ -145,5 +145,57 @@ func _process_command(command: Dictionary, command_id: String) -> void:
 		_processing_command = false
 		return
 
+	# Expand and select the real item in the editor's Scene dock. This is
+	# deliberately a UI-level verification: the screenshot must show the
+	# requested node in the hierarchy, not merely a programmatic Node lookup.
+	var scene_dock_item := _find_scene_dock_item(selected)
+	if scene_dock_item.is_empty():
+		push_error("[DRAGON_INSPECTOR] %s scene_dock_item_not_found scene=%s node=%s" % [command_id, scene_path, node_path])
+		_processing_command = false
+		return
+	var scene_tree: Tree = scene_dock_item["tree"]
+	var scene_item: TreeItem = scene_dock_item["item"]
+	var ancestor: TreeItem = scene_item
+	while ancestor != null:
+		ancestor.collapsed = false
+		ancestor = ancestor.get_parent()
+	scene_tree.set_selected(scene_item, 0)
+	scene_tree.ensure_cursor_is_visible()
+	scene_tree.queue_redraw()
+	await get_tree().process_frame
+	if scene_tree.get_selected() != scene_item:
+		push_error("[DRAGON_INSPECTOR] %s scene_dock_selection_failed scene=%s node=%s" % [command_id, scene_path, node_path])
+		_processing_command = false
+		return
+
+	print("[DRAGON_INSPECTOR] SCENE_DOCK_SELECTED id=%s scene=%s node=%s type=%s" % [command_id, scene_path, node_path, selected.get_class()])
 	print("[DRAGON_INSPECTOR] VERIFIED id=%s scene=%s node=%s type=%s" % [command_id, scene_path, node_path, selected.get_class()])
 	_processing_command = false
+
+func _find_scene_dock_item(target: Node) -> Dictionary:
+	var base := EditorInterface.get_base_control()
+	if base == null:
+		return {}
+	var trees := base.find_children("*", "Tree", true, false)
+	for candidate in trees:
+		if not (candidate is Tree):
+			continue
+		var tree := candidate as Tree
+		var root_item := tree.get_root()
+		if root_item == null:
+			continue
+		var match_item := _find_tree_item_for_node(root_item, target)
+		if match_item != null:
+			return {"tree": tree, "item": match_item}
+	return {}
+
+func _find_tree_item_for_node(item: TreeItem, target: Node) -> TreeItem:
+	if item.get_metadata(0) == target:
+		return item
+	var child := item.get_first_child()
+	while child != null:
+		var match_item := _find_tree_item_for_node(child, target)
+		if match_item != null:
+			return match_item
+		child = child.get_next()
+	return null
