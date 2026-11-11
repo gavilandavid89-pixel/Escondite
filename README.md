@@ -25,6 +25,17 @@ Prototipo RPG 2D para Godot 4.7.2, construido desde cero a partir de ideas de un
 
 1. Abre el proyecto con Godot 4.7.2.
 2. Ejecuta `Main.tscn`.
+
+## Integración con Godot Web
+
+El proyecto incluye los complementos **Godot Command Center** y **Godot Shared Project Sync**, habilitados en `project.godot`. Al importar este proyecto en el editor Godot Web 4.7.2 aparecen los docks correspondientes:
+
+- **Command Center:** emparejamiento como `web_editor`, lectura del estado del proyecto y capturas del viewport 2D/3D.
+- **Shared Projects:** sincronización manual y versionada del proyecto mediante el Relay y Neon, con análisis de conflictos y copias de rescate.
+
+La captura remota actualmente admite `editor_2d` y `editor_3d`. No se debe confundir una captura del viewport del editor con una captura del juego en ejecución; `game_preview`, la interfaz completa del editor y el zoom por coordenadas aún no están habilitados.
+
+El puesto web debe emparejarse por separado y permanecer aislado del editor Android. No se habilitan escritura remota arbitraria, shell ni ejecución de procesos.
 3. Para pruebas automáticas:
 
 ```bash
