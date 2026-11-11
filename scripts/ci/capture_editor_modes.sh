@@ -31,10 +31,53 @@ xvfb-run -a -s "-screen 0 ${SCREEN_SIZE}x24" bash -euo pipefail -c '
   editor_pid=$!
   sleep "$EDITOR_WAIT"
   kill -0 "$editor_pid"
-  if [ -f "$HOME/.config/godot/editor_settings-4.tres" ]; then
-    cp "$HOME/.config/godot/editor_settings-4.tres" "$OUTPUT_DIR/editor-settings-4.tres"
-  fi
+  find "$HOME/.config/godot" -maxdepth 1 -type f -name "editor_settings*" -exec cp {} "$OUTPUT_DIR/" \; 2>/dev/null || true
   ffmpeg -y -loglevel error -f x11grab -video_size "$SCREEN_SIZE" -i "$DISPLAY" -frames:v 1 "$OUTPUT_DIR/editor-only.png"
+
+  # 2D workspace and the scene tree/Inspector docks.
+  xdotool key --clearmodifiers ctrl+F1
+  sleep 2
+  ffmpeg -y -loglevel error -f x11grab -video_size "$SCREEN_SIZE" -i "$DISPLAY" -frames:v 1 "$OUTPUT_DIR/editor-2d-workspace.png"
+
+  # Open the main script through Godot's Quick Open Script dialog.
+  xdotool key --clearmodifiers ctrl+alt+o
+  sleep 1
+  xdotool type --clearmodifiers --delay 2 "res://scripts/main.gd"
+  xdotool key Return
+  sleep 3
+  ffmpeg -y -loglevel error -f x11grab -video_size "$SCREEN_SIZE" -i "$DISPLAY" -frames:v 1 "$OUTPUT_DIR/editor-script-main.png"
+
+  # Save visible Output and Debugger panels as separate evidence.
+  xdotool key --clearmodifiers alt+o
+  sleep 2
+  ffmpeg -y -loglevel error -f x11grab -video_size "$SCREEN_SIZE" -i "$DISPLAY" -frames:v 1 "$OUTPUT_DIR/editor-output-panel.png"
+  xdotool key --clearmodifiers alt+d
+  sleep 2
+  ffmpeg -y -loglevel error -f x11grab -video_size "$SCREEN_SIZE" -i "$DISPLAY" -frames:v 1 "$OUTPUT_DIR/editor-debugger-panel.png"
+
+  # Visit every authored scene in the real editor. The complete node hierarchy
+  # is also exported as text/JSON so no scene is lost if a dialog search misses.
+  mapfile -t scene_paths < <(python3 - "$OUTPUT_DIR/project-inspection.json" <<'PYSCENES'
+import json, sys
+with open(sys.argv[1], encoding="utf-8") as f:
+    data = json.load(f)
+for scene in data.get("scenes", []):
+    path = scene.get("path", "")
+    if path.endswith(".tscn"):
+        print(path)
+PYSCENES
+)
+  mkdir -p "$OUTPUT_DIR/scenes"
+  for scene_path in "${scene_paths[@]}"; do
+    scene_slug=$(printf "%s" "$scene_path" | tr '/.' '__')
+    echo "[EDITOR] Opening scene $scene_path"
+    xdotool key --clearmodifiers ctrl+shift+o
+    sleep 0.6
+    xdotool type --clearmodifiers --delay 1 "res://$scene_path"
+    xdotool key Return
+    sleep 2
+    ffmpeg -y -loglevel error -f x11grab -video_size "$SCREEN_SIZE" -i "$DISPLAY" -frames:v 1 "$OUTPUT_DIR/scenes/$scene_slug.png"
+  done
 
   echo "[EDITOR] Launching windowed game over editor"
   "$GODOT_BIN" --audio-driver Dummy --path "$PROJECT_DIR" --rendering-method gl_compatibility --windowed --resolution 1280x720 -- --preview >"$OUTPUT_DIR/game-windowed.log" 2>&1 &
