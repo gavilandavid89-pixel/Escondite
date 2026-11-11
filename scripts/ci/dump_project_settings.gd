@@ -7,23 +7,25 @@ func _initialize() -> void:
 		quit(2)
 		return
 
-	# Cross-check the scene parser in a fresh headless process before the
-	# graphical editor test. This isolates editor state from resource parsing.
-	var enemy_source := FileAccess.get_file_as_string("res://scenes/enemies/enemy.tscn")
-	var enemy_scene := ResourceLoader.load("res://scenes/enemies/enemy.tscn", "PackedScene", ResourceLoader.CACHE_MODE_IGNORE) as PackedScene
-	if enemy_scene == null:
-		print("[INSPECT_SCENE_PROBE] load_failed source_bytes=%d" % enemy_source.length())
-	else:
-		var enemy_state := enemy_scene.get_state()
-		var enemy_instance := enemy_scene.instantiate()
-		print("[INSPECT_SCENE_PROBE] source_bytes=%d source_node_declarations=%d packed_state_nodes=%d instantiated_children=%d child_names=%s" % [
-			enemy_source.length(),
-			enemy_source.count("[node name="),
-			enemy_state.get_node_count(),
-			enemy_instance.get_child_count(),
-			JSON.stringify(enemy_instance.get_children().map(func(child): return str(child.name)))
-		])
-		enemy_instance.free()
+	# Cross-check multiple collision scenes in a fresh headless process.
+	# This separates a scene-specific parse problem from editor state/cache issues.
+	for probe_path in ["res://scenes/enemies/enemy.tscn", "res://scenes/player/player.tscn"]:
+		var probe_source := FileAccess.get_file_as_string(probe_path)
+		for cache_mode in [ResourceLoader.CACHE_MODE_IGNORE, ResourceLoader.CACHE_MODE_REPLACE]:
+			var probe_scene := ResourceLoader.load(probe_path, "PackedScene", cache_mode) as PackedScene
+			if probe_scene == null:
+				print("[INSPECT_SCENE_PROBE] path=%s mode=%d load_failed source_bytes=%d declarations=%d" % [
+					probe_path, cache_mode, probe_source.length(), probe_source.count("[node name=")
+				])
+			else:
+				var probe_state := probe_scene.get_state()
+				var probe_instance := probe_scene.instantiate()
+				print("[INSPECT_SCENE_PROBE] path=%s mode=%d source_bytes=%d declarations=%d packed_nodes=%d children=%d child_names=%s" % [
+					probe_path, cache_mode, probe_source.length(), probe_source.count("[node name="),
+					probe_state.get_node_count(), probe_instance.get_child_count(),
+					JSON.stringify(probe_instance.get_children().map(func(child): return str(child.name)))
+				])
+				probe_instance.free()
 
 	var rows: Array[Dictionary] = []
 	for property in ProjectSettings.get_property_list():
