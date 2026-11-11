@@ -43,12 +43,12 @@ trap cleanup EXIT INT TERM
 sleep 1
 
 # Enable a temporary EditorPlugin bridge only for this CI run.
-python3 - "$PROJECT_DIR/project.godot" <<'"'"'PYENABLE'
+python3 - "$PROJECT_DIR/project.godot" <<PYENABLE
 import re, sys
 p=sys.argv[1]
 s=open(p,encoding="utf-8").read()
 plugin="res://addons/dragon_realm_ci_inspector/plugin.cfg"
-m=re.search(r'^enabled=PackedStringArray\(([^)]*)\)$',s,re.M)
+m=re.search(r'^enabled=PackedStringArray\(([^)]*)\)\Z',s,re.M)
 if not m:
   raise SystemExit("Could not locate [editor_plugins] enabled setting")
 items=re.findall(r'"([^"]+)"',m.group(1))
