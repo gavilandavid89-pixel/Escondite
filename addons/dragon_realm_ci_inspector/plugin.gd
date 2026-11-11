@@ -43,7 +43,12 @@ func _poll_command() -> void:
 			continue
 		_last_command_id = command_id
 		DirAccess.remove_absolute(command_path)
+		# Serialize editor mutations: pause polling while a scene is opening and
+		# selection is being verified, then resume for the next queued command.
+		_poll_timer.stop()
 		await _process_command(command, command_id)
+		_poll_timer.start()
+		return
 
 func _process_command(command: Dictionary, command_id: String) -> void:
 
