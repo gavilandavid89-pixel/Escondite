@@ -48,7 +48,7 @@ import re, sys
 p=sys.argv[1]
 s=open(p,encoding="utf-8").read()
 plugin="res://addons/dragon_realm_ci_inspector/plugin.cfg"
-m=re.search(r'^enabled=PackedStringArray\(([^)]*)\)\
+m=re.search(r'^enabled=PackedStringArray\(([^)]*)\)',s,re.M)
 if not m:
   raise SystemExit("Could not locate [editor_plugins] enabled setting")
 items=re.findall(r'"([^"]+)"',m.group(1))
