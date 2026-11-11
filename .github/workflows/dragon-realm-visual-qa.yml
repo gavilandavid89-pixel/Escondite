@@ -53,6 +53,11 @@ jobs:
       - name: Import project and validate scripts
         run: godot --headless --audio-driver Dummy --editor --path . --quit
 
+      - name: Build project and scene inspection bundle
+        env:
+          INSPECTION_DIR: ${{ runner.temp }}/dragon-realm-inspection
+        run: python3 scripts/ci/inspect_project.py . "$INSPECTION_DIR"
+
       - name: Run world integration test
         run: godot --headless --audio-driver Dummy --path . -- --self-test
 
@@ -85,12 +90,21 @@ jobs:
           CAPTURE_DELAY: "3"
         run: bash scripts/ci/capture_visuals.sh
 
+      - name: Capture Godot editor and display modes
+        env:
+          GODOT_BIN: godot
+          PROJECT_DIR: ${{ github.workspace }}
+          OUTPUT_DIR: ${{ runner.temp }}/dragon-realm-inspection
+          EDITOR_WAIT: "25"
+          GAME_WAIT: "4"
+        run: bash scripts/ci/capture_editor_modes.sh
+
       - name: Upload visual evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: dragon-realm-visual-qa-${{ github.sha }}
-          path: ${{ runner.temp }}/dragon-realm-visuals/
+          path: |\n            ${{ runner.temp }}/dragon-realm-visuals/\n            ${{ runner.temp }}/dragon-realm-inspection/
           if-no-files-found: warn
           retention-days: 14
 
