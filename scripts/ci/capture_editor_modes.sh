@@ -31,6 +31,9 @@ xvfb-run -a -s "-screen 0 ${SCREEN_SIZE}x24" bash -euo pipefail -c '
   editor_pid=$!
   sleep "$EDITOR_WAIT"
   kill -0 "$editor_pid"
+  if [ -f "$HOME/.config/godot/editor_settings-4.tres" ]; then
+    cp "$HOME/.config/godot/editor_settings-4.tres" "$OUTPUT_DIR/editor-settings-4.tres"
+  fi
   ffmpeg -y -loglevel error -f x11grab -video_size "$SCREEN_SIZE" -i "$DISPLAY" -frames:v 1 "$OUTPUT_DIR/editor-only.png"
 
   echo "[EDITOR] Launching windowed game over editor"
@@ -53,7 +56,6 @@ xvfb-run -a -s "-screen 0 ${SCREEN_SIZE}x24" bash -euo pipefail -c '
   wait "$game_pid" 2>/dev/null || true
   game_pid=""
 
-  # Restore the editor as the only visible application for a final clean capture.
   sleep 2
   ffmpeg -y -loglevel error -f x11grab -video_size "$SCREEN_SIZE" -i "$DISPLAY" -frames:v 1 "$OUTPUT_DIR/editor-clean.png"
 
@@ -62,5 +64,16 @@ xvfb-run -a -s "-screen 0 ${SCREEN_SIZE}x24" bash -euo pipefail -c '
     bytes=$(wc -c < "$file")
     [ "$bytes" -ge 10000 ] || { echo "Suspicious screenshot: $file ($bytes bytes)" >&2; exit 1; }
   done
+
+  {
+    echo "=== GODOT EDITOR ==="
+    cat "$OUTPUT_DIR/editor.log" 2>/dev/null || true
+    echo
+    echo "=== WINDOWED GAME / DEBUG OUTPUT ==="
+    cat "$OUTPUT_DIR/game-windowed.log" 2>/dev/null || true
+    echo
+    echo "=== FULLSCREEN GAME / DEBUG OUTPUT ==="
+    cat "$OUTPUT_DIR/game-fullscreen.log" 2>/dev/null || true
+  } > "$OUTPUT_DIR/editor-debugger-output.txt"
 '
-echo "[EDITOR] Captures saved in $OUTPUT_DIR"
+echo "[EDITOR] Captures and logs saved in $OUTPUT_DIR"
