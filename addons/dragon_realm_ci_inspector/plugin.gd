@@ -49,43 +49,52 @@ func _poll_command() -> void:
 		return
 
 func _process_command(command: Dictionary, command_id: String) -> void:
-
 	var scene_path := str(command.get("scene", ""))
-	print("[DRAGON_INSPECTOR] RECEIVED id=%s scene=%s node=%s" % [command_id, scene_path, str(command.get("node_path", "."))])
+	var node_path := str(command.get("node_path", "."))
+	print("[DRAGON_INSPECTOR] RECEIVED id=%s scene=%s node=%s" % [command_id, scene_path, node_path])
 	if scene_path.is_empty():
 		push_error("[DRAGON_INSPECTOR] %s missing scene path" % command_id)
 		_processing_command = false
 		return
-	EditorInterface.open_scene_from_path(scene_path)
 
-	# Let the editor finish instantiating the opened PackedScene before
-	# resolving child paths (especially CollisionShape2D and nested nodes).
-	for frame in range(8):
+	EditorInterface.open_scene_from_path(scene_path)
+	# Wait for the requested scene root to become active in the editor.
+	var root: Node
+	for frame in range(120):
 		await get_tree().process_frame
-	var root := EditorInterface.get_edited_scene_root()
-	if root == null:
-		push_error("[DRAGON_INSPECTOR] %s no_edited_scene_root scene=%s" % [command_id, scene_path])
+		root = EditorInterface.get_edited_scene_root()
+		if root != null and root.scene_file_path == scene_path:
+			break
+	if root == null or root.scene_file_path != scene_path:
+		push_error("[DRAGON_INSPECTOR] %s scene_open_timeout expected=%s actual=%s" % [command_id, scene_path, str(root.scene_file_path if root != null else "<null>")])
 		_processing_command = false
 		return
-	if root.scene_file_path != scene_path:
-		push_error("[DRAGON_INSPECTOR] %s wrong_scene expected=%s actual=%s" % [command_id, scene_path, root.scene_file_path])
-		_processing_command = false
-		return
-	# Capture the actual scene workspace, not a stale Script editor tab.
+
 	EditorInterface.set_main_screen_editor("2D")
 	await get_tree().process_frame
 
-	var node_path := str(command.get("node_path", "."))
-	var selected: Node = root if node_path == "." else root.get_node_or_null(NodePath(node_path))
-	if selected == null and node_path != ".":
-		# Some editor scene roots expose instanced children differently through
-		# get_node_or_null; search by leaf name, then verify the exact relative path.
-		var candidate := root.find_child(node_path.get_file(), true, false)
-		if candidate != null and str(root.get_path_to(candidate)) == node_path:
-			selected = candidate
+	var selected: Node
+	if node_path == ".":
+		selected = root
+	else:
+		var requested_path := NodePath(node_path)
+		# Scene instantiation can complete after the edited root becomes visible.
+		# Resolve the exact relative path repeatedly instead of treating a transient
+		# empty child list as a permanent missing-node error.
+		for frame in range(120):
+			selected = root.get_node_or_null(requested_path)
+			if selected != null:
+				break
+			var candidate := root.find_child(requested_path.get_concatenated_names().get(requested_path.get_concatenated_names().size() - 1) if requested_path.get_concatenated_names().size() > 0 else node_path, true, false)
+			if candidate != null and str(root.get_path_to(candidate)) == node_path:
+				selected = candidate
+				break
+			await get_tree().process_frame
+
 	if selected == null:
-		print("[DRAGON_INSPECTOR] ROOT_DIAGNOSTIC scene=%s root=%s children=%d child_names=%s" % [scene_path, root.name, root.get_child_count(), str(root.get_children().map(func(child): return child.name))])
-		push_error("[DRAGON_INSPECTOR] %s node_not_found scene=%s node=%s" % [command_id, scene_path, node_path])
+		var child_names := root.get_children().map(func(child): return child.name)
+		print("[DRAGON_INSPECTOR] ROOT_DIAGNOSTIC scene=%s root=%s path=%s children=%d child_names=%s" % [scene_path, root.name, node_path, root.get_child_count(), str(child_names)])
+		push_error("[DRAGON_INSPECTOR] %s node_not_found_after_wait scene=%s node=%s" % [command_id, scene_path, node_path])
 		_processing_command = false
 		return
 
