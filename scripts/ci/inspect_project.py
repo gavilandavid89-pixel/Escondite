@@ -26,12 +26,26 @@ def parse_scene(path: Path) -> dict:
         attrs = dict(re.findall(r'(\w+)="([^"]*)"', match.group(1)))
         if not attrs.get("name"):
             continue
+        has_parent = "parent" in attrs
         path_value = attrs.get("parent", ".")
+        # The scene root has no parent attribute and is addressed as ".".
+        # A direct child explicitly declares parent="." and must be addressed
+        # by its own name, not mistaken for the scene root.
+        if not has_parent:
+            node_path = "."
+            depth = 0
+        elif path_value == ".":
+            node_path = attrs["name"]
+            depth = 1
+        else:
+            node_path = path_value + "/" + attrs["name"]
+            depth = path_value.count("/") + 2
         nodes.append({
             "name": attrs["name"],
             "type": attrs.get("type", ""),
             "parent": path_value,
-            "node_path": "." if path_value == "." else path_value + "/" + attrs["name"],
+            "node_path": node_path,
+            "depth": depth,
             "instance": attrs.get("instance", ""),
             "groups": [],
             "script": "",
@@ -100,7 +114,7 @@ with (OUT / "scene-tree-index.txt").open("w", encoding="utf-8") as f:
         f.write(f'\n## {scene["path"]} ({scene["node_count"]} nodes)\n')
         by_path = {n["node_path"]: n for n in scene["nodes"]}
         for node in scene["nodes"]:
-            depth = 0 if node["parent"] == "." else node["parent"].count("/") + 1
+            depth = node.get("depth", 0)
             extra = f' [{node["type"]}]' if node["type"] else ""
             script = f' — script: {node["script"]}' if node["script"] else ""
             f.write(f'{"  " * depth}- {node["name"]}{extra}{script}\n')
