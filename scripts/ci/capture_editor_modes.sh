@@ -42,7 +42,7 @@ xvfb-run -a -s "-screen 0 ${SCREEN_SIZE}x24" bash -euo pipefail -c '
   sleep 2
   ffmpeg -y -loglevel error -f x11grab -video_size "$SCREEN_SIZE" -i "$DISPLAY" -frames:v 1 "$OUTPUT_DIR/editor-2d-workspace.png"
 
-  # Open the main script through Godot's Quick Open Script dialog.
+  # Open the main script through Godot Quick Open Script dialog.
   env DISPLAY="$x_display" xdotool key --clearmodifiers ctrl+alt+o
   sleep 1
   env DISPLAY="$x_display" xdotool type --clearmodifiers --delay 2 "res://scripts/main.gd"
