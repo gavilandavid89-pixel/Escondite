@@ -32,3 +32,5 @@ jobs:
           path: export/
           retention-days: 7
           if-no-files-found: error
+
+# Keep this workflow as the repeatable source-sync mechanism for Headless validation.
