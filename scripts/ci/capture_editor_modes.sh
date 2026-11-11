@@ -90,9 +90,13 @@ with open(sys.argv[2],"w",encoding="utf-8") as out:
     for scene in data.get("scenes",[]):
         path=scene.get("path","")
         if not path.endswith(".tscn"): continue
-        out.write(path+"\t\n")
+        # Capture the scene root once, then every child node. An empty path is
+        # ambiguous in Godot; "." explicitly means the edited scene root.
+        out.write(path+"\t.\n")
         for node in scene.get("nodes",[]):
-            out.write(path+"\t"+node.get("node_path","")+"\n")
+            node_path=node.get("node_path","")
+            if node_path == ".": continue
+            out.write(path+"\t"+node_path+"\n")
 PYCOMMANDS
   test -s "$OUTPUT_DIR/scene-node-commands.tsv"
   command_total=$(wc -l < "$OUTPUT_DIR/scene-node-commands.tsv")
@@ -135,6 +139,7 @@ PYWRITE
   [ "$verified_total" -eq "$command_total" ] || { echo "Verified $verified_total of $command_total scene/node inspections" >&2; exit 1; }
   scene_capture_total=$(find "$OUTPUT_DIR/scenes" -maxdepth 1 -type f -name "*.png" 2>/dev/null | wc -l)
   node_capture_total=$(find "$OUTPUT_DIR/nodes" -type f -name "*.png" 2>/dev/null | wc -l)
+  [ "$((scene_capture_total + node_capture_total))" -eq "$command_total" ] || { echo "Captured $((scene_capture_total + node_capture_total)) of $command_total requested editor views" >&2; exit 1; }
   echo "[EDITOR] Verified $verified_total commands; captured $scene_capture_total scene roots and $node_capture_total nodes"
 
   # Game preview floating above the editor, then fullscreen.
