@@ -23,7 +23,14 @@ func _poll_command() -> void:
 	if _command_file.is_empty() or not FileAccess.file_exists(_command_file):
 		return
 	var raw := FileAccess.get_file_as_string(_command_file)
-	var parsed: Variant = JSON.parse_string(raw)
+	if raw.is_empty():
+		return
+	var parser := JSON.new()
+	if parser.parse(raw.strip_edges()) != OK:
+		# The command file may be observed during an atomic handoff on some
+		# virtualized filesystems. Ignore this poll and retry on the next tick.
+		return
+	var parsed: Variant = parser.data
 	if not (parsed is Dictionary):
 		return
 	var command: Dictionary = parsed
@@ -33,6 +40,7 @@ func _poll_command() -> void:
 	_last_command_id = command_id
 
 	var scene_path := str(command.get("scene", ""))
+	print("[DRAGON_INSPECTOR] RECEIVED id=%s scene=%s node=%s" % [command_id, scene_path, str(command.get("node_path", "."))])
 	if scene_path.is_empty():
 		push_error("[DRAGON_INSPECTOR] %s missing scene path" % command_id)
 		return
