@@ -11,7 +11,7 @@ GAME_WAIT="${GAME_WAIT:-4}"
 mkdir -p "$OUTPUT_DIR"
 export GODOT_BIN PROJECT_DIR OUTPUT_DIR SCREEN_SIZE EDITOR_WAIT GAME_WAIT
 
-xvfb-run -a -s "-screen 0 ${SCREEN_SIZE}x24" bash -euo pipefail -c '
+xvfb-run -a -s "-screen 0 ${SCREEN_SIZE}x24" bash -s <<'XVFB'
   x_display="${DISPLAY:-:99}"
   export DISPLAY="$x_display"
   echo "[EDITOR] Using display $x_display"
@@ -168,5 +168,5 @@ PYWRITE
     echo "=== FULLSCREEN GAME / DEBUG OUTPUT ==="
     cat "$OUTPUT_DIR/game-fullscreen.log" 2>/dev/null || true
   } > "$OUTPUT_DIR/editor-debugger-output.txt"
-'
+XVFB
 echo "[EDITOR] Captures and logs saved in $OUTPUT_DIR"
