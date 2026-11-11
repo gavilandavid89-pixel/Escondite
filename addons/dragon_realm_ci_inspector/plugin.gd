@@ -89,6 +89,17 @@ func _process_command(command: Dictionary, command_id: String) -> void:
 		push_error("[DRAGON_INSPECTOR] %s packed_scene_load_failed scene=%s" % [command_id, scene_path])
 		_processing_command = false
 		return
+	var packed_state := packed.get_state()
+	var serialized_nodes: Array[Dictionary] = []
+	for state_index in range(packed_state.get_node_count()):
+		serialized_nodes.append({
+			"path": str(packed_state.get_node_path(state_index)),
+			"type": str(packed_state.get_node_type(state_index))
+		})
+	print("[DRAGON_INSPECTOR] PACKED_STATE id=%s scene=%s node_count=%d nodes=%s" % [
+		command_id, scene_path, packed_state.get_node_count(), JSON.stringify(serialized_nodes)
+	])
+
 	var reference_root := packed.instantiate()
 	if reference_root == null:
 		push_error("[DRAGON_INSPECTOR] %s packed_scene_instantiate_failed scene=%s" % [command_id, scene_path])
