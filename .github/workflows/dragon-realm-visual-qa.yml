@@ -20,7 +20,7 @@ permissions:
 
 concurrency:
   group: dragon-realm-visual-qa-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   validate-and-capture:
