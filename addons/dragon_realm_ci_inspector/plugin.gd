@@ -69,6 +69,9 @@ func _process_command(command: Dictionary, command_id: String) -> void:
 		push_error("[DRAGON_INSPECTOR] %s wrong_scene expected=%s actual=%s" % [command_id, scene_path, root.scene_file_path])
 		_processing_command = false
 		return
+	# Capture the actual scene workspace, not a stale Script editor tab.
+	EditorInterface.set_main_screen_editor("2D")
+	await get_tree().process_frame
 
 	var node_path := str(command.get("node_path", "."))
 	var selected: Node = root if node_path == "." else root.get_node_or_null(NodePath(node_path))
