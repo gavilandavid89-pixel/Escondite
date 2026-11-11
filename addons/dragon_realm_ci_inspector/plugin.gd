@@ -97,13 +97,9 @@ func _process_command(command: Dictionary, command_id: String) -> void:
 	# Record the exact scene declarations read from disk in this CI process.
 	# This separates a checkout/file problem from an editor resource-cache issue.
 	var scene_source := FileAccess.get_file_as_string(scene_path)
-	var declared_node_lines: Array[String] = []
-	for source_line in scene_source.split("\\n"):
-		if str(source_line).begins_with("[node "):
-			declared_node_lines.append(str(source_line))
-	print("[DRAGON_INSPECTOR] SOURCE_FILE id=%s scene=%s bytes=%d head=%s" % [command_id, scene_path, scene_source.length(), JSON.stringify(scene_source.substr(0, 320))])
-	print("[DRAGON_INSPECTOR] SOURCE_NODES id=%s scene=%s count=%d declarations=%s" % [
-		command_id, scene_path, declared_node_lines.size(), JSON.stringify(declared_node_lines)
+	var declared_node_count := scene_source.count("[node name=")
+	print("[DRAGON_INSPECTOR] SOURCE_FILE id=%s scene=%s bytes=%d declared_nodes=%d content=%s" % [
+		command_id, scene_path, scene_source.length(), declared_node_count, JSON.stringify(scene_source)
 	])
 
 	# Independently instantiate the serialized PackedScene and compare its
