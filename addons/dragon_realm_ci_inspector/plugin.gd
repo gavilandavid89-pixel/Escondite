@@ -82,9 +82,21 @@ func _process_command(command: Dictionary, command_id: String) -> void:
 		_processing_command = false
 		return
 
+	# Reload even when the requested scene is already the active tab. The
+	# previous CI trace showed the editor and PackedScene cache both exposing
+	# only the root although the checked-in .tscn declares child nodes.
+	EditorInterface.reload_scene_from_path(scene_path)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	root = EditorInterface.get_edited_scene_root()
+	if root == null or root.scene_file_path != scene_path:
+		push_error("[DRAGON_INSPECTOR] %s scene_reload_failed expected=%s" % [command_id, scene_path])
+		_processing_command = false
+		return
+
 	# Independently instantiate the serialized PackedScene and compare its
 	# hierarchy against the live Scene dock root before trusting node lookup.
-	var packed := load(scene_path) as PackedScene
+	var packed := ResourceLoader.load(scene_path, "PackedScene", ResourceLoader.CACHE_MODE_IGNORE) as PackedScene
 	if packed == null:
 		push_error("[DRAGON_INSPECTOR] %s packed_scene_load_failed scene=%s" % [command_id, scene_path])
 		_processing_command = false
