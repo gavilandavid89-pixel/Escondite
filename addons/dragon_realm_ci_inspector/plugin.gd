@@ -195,6 +195,8 @@ func _find_tree_item_for_node(item: TreeItem, target: Node, target_path: String,
 	var metadata: Variant = item.get_metadata(0)
 	if metadata is Node and metadata == target:
 		return item
+	if current_path == "." and target_path == "." and item.get_text(0) == str(target.name):
+		return item
 	var child := item.get_first_child()
 	while child != null:
 		var child_name := child.get_text(0)
