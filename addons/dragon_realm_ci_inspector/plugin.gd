@@ -75,6 +75,12 @@ func _process_command(command: Dictionary, command_id: String) -> void:
 
 	var node_path := str(command.get("node_path", "."))
 	var selected: Node = root if node_path == "." else root.get_node_or_null(NodePath(node_path))
+	if selected == null and node_path != ".":
+		# Some editor scene roots expose instanced children differently through
+		# get_node_or_null; search by leaf name, then verify the exact relative path.
+		var candidate := root.find_child(node_path.get_file(), true, false)
+		if candidate != null and str(root.get_path_to(candidate)) == node_path:
+			selected = candidate
 	if selected == null:
 		push_error("[DRAGON_INSPECTOR] %s node_not_found scene=%s node=%s" % [command_id, scene_path, node_path])
 		_processing_command = false
