@@ -187,7 +187,7 @@ func _run_race_test() -> void:
 	if not SkillManager.can_learn("saiyan_ki_burst"): failures.append("ki_mission_5_unlock")
 	if not SkillManager.learn("saiyan_ki_burst"): failures.append("ki_learn")
 	if GameState.potential_points != 0: failures.append("free_ki_cost")
-	GameState.potential_points = 100
+	GameState.potential_points = SkillManager.unlock_cost("galick_gun") + SkillManager.rank_cost("galick_gun", 2)
 	if not SkillManager.learn("galick_gun"): failures.append("potential_skill_learn")
 	var before_pot := GameState.potential_points
 	if not SkillManager.upgrade("galick_gun"): failures.append("skill_upgrade")
