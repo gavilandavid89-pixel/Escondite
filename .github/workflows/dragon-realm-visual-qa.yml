@@ -103,6 +103,6 @@ jobs:
             echo
             echo "- Commit: $GITHUB_SHA"
             echo "- Engine: Godot 4.7.2 stable"
-            echo "- Captures: menu, Valle Azul, Ciudad Capsule, Pantanos de Namek"
+            echo "- Captures: menu, gameplay maps, Godot editor, windowed game over editor, fullscreen game\n            echo "- Inspection bundle: project settings, scene trees, GDScript source index, source files and runtime logs"
             echo "- Evidence: workflow artifact dragon-realm-visual-qa-$GITHUB_SHA"
           } >> "$GITHUB_STEP_SUMMARY"
