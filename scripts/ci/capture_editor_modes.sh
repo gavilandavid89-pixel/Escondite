@@ -59,7 +59,7 @@ xvfb-run -a -s "-screen 0 ${SCREEN_SIZE}x24" bash -euo pipefail -c '
   sleep 2
   ffmpeg -y -loglevel error -f x11grab -video_size "$SCREEN_SIZE" -i "$DISPLAY" -frames:v 1 "$OUTPUT_DIR/editor-clean.png"
 
-  for file in "$OUTPUT_DIR"/editor-only.png "$OUTPUT_DIR"/game-windowed-over-editor.png "$OUTPUT_DIR"/game-fullscreen.png "$OUTPUT_DIR"/editor-clean.png; do
+  for file in "$OUTPUT_DIR"/editor-only.png "$OUTPUT_DIR"/editor-2d-workspace.png "$OUTPUT_DIR"/editor-script-main.png "$OUTPUT_DIR"/editor-output-panel.png "$OUTPUT_DIR"/editor-debugger-panel.png "$OUTPUT_DIR"/game-windowed-over-editor.png "$OUTPUT_DIR"/game-fullscreen.png "$OUTPUT_DIR"/editor-clean.png; do
     test -s "$file"
     bytes=$(wc -c < "$file")
     [ "$bytes" -ge 10000 ] || { echo "Suspicious screenshot: $file ($bytes bytes)" >&2; exit 1; }
