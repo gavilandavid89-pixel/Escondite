@@ -52,9 +52,11 @@ xvfb-run -a -s "-screen 0 ${SCREEN_SIZE}x24" bash -euo pipefail -c '
 
   # Save visible Output and Debugger panels as separate evidence.
   env DISPLAY="$x_display" xdotool key --clearmodifiers alt+o
+  env DISPLAY="$x_display" xdotool key --clearmodifiers shift+F12
   sleep 2
   ffmpeg -y -loglevel error -f x11grab -video_size "$SCREEN_SIZE" -i "$DISPLAY" -frames:v 1 "$OUTPUT_DIR/editor-output-panel.png"
   env DISPLAY="$x_display" xdotool key --clearmodifiers alt+d
+  env DISPLAY="$x_display" xdotool key --clearmodifiers shift+F12
   sleep 2
   ffmpeg -y -loglevel error -f x11grab -video_size "$SCREEN_SIZE" -i "$DISPLAY" -frames:v 1 "$OUTPUT_DIR/editor-debugger-panel.png"
 
@@ -76,7 +78,8 @@ PYSCENES
     echo "[EDITOR] Opening scene $scene_path"
     env DISPLAY="$x_display" xdotool key --clearmodifiers ctrl+shift+o
     sleep 0.6
-    env DISPLAY="$x_display" xdotool type --clearmodifiers --delay 1 "res://$scene_path"
+    scene_name="${scene_path##*/}"
+    env DISPLAY="$x_display" xdotool type --clearmodifiers --delay 1 "$scene_name"
     env DISPLAY="$x_display" xdotool key Return
     sleep 2
     ffmpeg -y -loglevel error -f x11grab -video_size "$SCREEN_SIZE" -i "$DISPLAY" -frames:v 1 "$OUTPUT_DIR/scenes/$scene_slug.png"
