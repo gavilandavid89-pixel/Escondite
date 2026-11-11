@@ -19,7 +19,9 @@ permissions:
 
 # Queue new inspections; never terminate an active run just because another commit arrives.
 concurrency:
-  group: dragon-realm-visual-qa-${{ github.ref }}
+  # Unique run group: GitHub may replace an older pending run in a shared group.
+  # A per-run key prevents this workflow from cancelling queued inspections.
+  group: dragon-realm-visual-qa-${{ github.run_id }}
   cancel-in-progress: false
 
 jobs:
