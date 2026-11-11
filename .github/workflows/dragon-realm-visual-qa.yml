@@ -33,7 +33,7 @@ jobs:
       - name: Install visual test dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y xvfb openbox ffmpeg unzip curl
+          sudo apt-get install -y xvfb openbox xdotool wmctrl ffmpeg unzip curl
 
       - name: Install pinned Godot 4.7.2
         shell: bash
