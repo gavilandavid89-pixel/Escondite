@@ -2,17 +2,17 @@
 extends EditorPlugin
 
 var _poll_timer: Timer
-var _command_file := ""
+var _command_dir := ""
 var _last_command_id := ""
 
 func _enter_tree() -> void:
-	_command_file = OS.get_environment("DRAGON_EDITOR_COMMAND_FILE")
+	_command_dir = OS.get_environment("DRAGON_EDITOR_COMMAND_DIR")
 	_poll_timer = Timer.new()
 	_poll_timer.wait_time = 0.35
 	_poll_timer.timeout.connect(_poll_command)
 	add_child(_poll_timer)
 	_poll_timer.start()
-	print("[DRAGON_INSPECTOR] bridge_ready command_file=%s" % _command_file)
+	print("[DRAGON_INSPECTOR] bridge_ready command_dir=%s" % _command_dir)
 
 func _exit_tree() -> void:
 	if is_instance_valid(_poll_timer):
@@ -20,24 +20,32 @@ func _exit_tree() -> void:
 		_poll_timer.queue_free()
 
 func _poll_command() -> void:
-	if _command_file.is_empty() or not FileAccess.file_exists(_command_file):
+	if _command_dir.is_empty() or not DirAccess.dir_exists_absolute(_command_dir):
 		return
-	var raw := FileAccess.get_file_as_string(_command_file)
-	if raw.is_empty():
-		return
-	var parser := JSON.new()
-	if parser.parse(raw.strip_edges()) != OK:
-		# The command file may be observed during an atomic handoff on some
-		# virtualized filesystems. Ignore this poll and retry on the next tick.
-		return
-	var parsed: Variant = parser.data
-	if not (parsed is Dictionary):
-		return
-	var command: Dictionary = parsed
-	var command_id := str(command.get("id", ""))
-	if command_id.is_empty() or command_id == _last_command_id:
-		return
-	_last_command_id = command_id
+	var files := DirAccess.get_files_at(_command_dir)
+	files.sort()
+	for filename in files:
+		if not filename.ends_with(".json"):
+			continue
+		var command_path := _command_dir.path_join(filename)
+		var raw := FileAccess.get_file_as_string(command_path)
+		if raw.is_empty():
+			continue
+		var parser := JSON.new()
+		if parser.parse(raw.strip_edges()) != OK:
+			continue
+		var parsed: Variant = parser.data
+		if not (parsed is Dictionary):
+			continue
+		var command: Dictionary = parsed
+		var command_id := str(command.get("id", ""))
+		if command_id.is_empty() or command_id == _last_command_id:
+			continue
+		_last_command_id = command_id
+		DirAccess.remove_absolute(command_path)
+		await _process_command(command, command_id)
+
+func _process_command(command: Dictionary, command_id: String) -> void:
 
 	var scene_path := str(command.get("scene", ""))
 	print("[DRAGON_INSPECTOR] RECEIVED id=%s scene=%s node=%s" % [command_id, scene_path, str(command.get("node_path", "."))])
