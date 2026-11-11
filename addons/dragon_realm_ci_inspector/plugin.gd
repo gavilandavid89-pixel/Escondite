@@ -58,8 +58,10 @@ func _process_command(command: Dictionary, command_id: String) -> void:
 		return
 	EditorInterface.open_scene_from_path(scene_path)
 
-	await get_tree().process_frame
-	await get_tree().process_frame
+	# Let the editor finish instantiating the opened PackedScene before
+	# resolving child paths (especially CollisionShape2D and nested nodes).
+	for frame in range(8):
+		await get_tree().process_frame
 	var root := EditorInterface.get_edited_scene_root()
 	if root == null:
 		push_error("[DRAGON_INSPECTOR] %s no_edited_scene_root scene=%s" % [command_id, scene_path])
@@ -82,6 +84,7 @@ func _process_command(command: Dictionary, command_id: String) -> void:
 		if candidate != null and str(root.get_path_to(candidate)) == node_path:
 			selected = candidate
 	if selected == null:
+		print("[DRAGON_INSPECTOR] ROOT_DIAGNOSTIC scene=%s root=%s children=%d child_names=%s" % [scene_path, root.name, root.get_child_count(), str(root.get_children().map(func(child): return child.name))])
 		push_error("[DRAGON_INSPECTOR] %s node_not_found scene=%s node=%s" % [command_id, scene_path, node_path])
 		_processing_command = false
 		return
