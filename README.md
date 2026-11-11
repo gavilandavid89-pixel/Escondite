@@ -26,16 +26,23 @@ Prototipo RPG 2D para Godot 4.7.2, construido desde cero a partir de ideas de un
 1. Abre el proyecto con Godot 4.7.2.
 2. Ejecuta `Main.tscn`.
 
-## Integración con Godot Web
+## Desarrollo y revisión visual automatizados
 
-El proyecto incluye los complementos **Godot Command Center** y **Godot Shared Project Sync**, habilitados en `project.godot`. Al importar este proyecto en el editor Godot Web 4.7.2 aparecen los docks correspondientes:
+Los cambios en `main` que afectan al juego activan **Dragon Realm Visual QA**. El workflow descarga Godot 4.7.2 oficial, importa el proyecto, ejecuta las pruebas de integración y regresión, y abre el juego en una pantalla virtual Xvfb para capturar:
 
-- **Command Center:** emparejamiento como `web_editor`, lectura del estado del proyecto y capturas del viewport 2D/3D.
-- **Shared Projects:** sincronización manual y versionada del proyecto mediante el Relay y Neon, con análisis de conflictos y copias de rescate.
+- Menú principal.
+- Valle Azul (gameplay).
+- Ciudad Capsule.
+- Pantanos de Namek.
 
-La captura remota actualmente admite `editor_2d` y `editor_3d`. No se debe confundir una captura del viewport del editor con una captura del juego en ejecución; `game_preview`, la interfaz completa del editor y el zoom por coordenadas aún no están habilitados.
+Las imágenes y los registros quedan publicados como artefacto de GitHub Actions durante 14 días. Esto elimina la necesidad de abrir Godot Web para revisar cada cambio. El flujo local equivalente es:
 
-El puesto web debe emparejarse por separado y permanecer aislado del editor Android. No se habilitan escritura remota arbitraria, shell ni ejecución de procesos.
+```bash
+GODOT_BIN=/ruta/a/godot OUTPUT_DIR=/tmp/dragon-visuals bash scripts/ci/capture_visuals.sh
+```
+
+Godot Web y los complementos **Godot Command Center** / **Godot Shared Project Sync** quedan como herramientas opcionales para inspecciones interactivas o sincronizaciones especiales; no son un paso obligatorio del ciclo normal de desarrollo. La captura CI es del juego realmente ejecutándose, no una imagen simulada del editor.
+
 3. Para pruebas automáticas:
 
 ```bash
