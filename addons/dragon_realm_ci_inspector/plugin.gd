@@ -4,6 +4,7 @@ extends EditorPlugin
 var _poll_timer: Timer
 var _command_dir := ""
 var _last_command_id := ""
+var _processing_command := false
 
 func _enter_tree() -> void:
 	_command_dir = OS.get_environment("DRAGON_EDITOR_COMMAND_DIR")
@@ -20,7 +21,7 @@ func _exit_tree() -> void:
 		_poll_timer.queue_free()
 
 func _poll_command() -> void:
-	if _command_dir.is_empty() or not DirAccess.dir_exists_absolute(_command_dir):
+	if _processing_command or _command_dir.is_empty() or not DirAccess.dir_exists_absolute(_command_dir):
 		return
 	var files := DirAccess.get_files_at(_command_dir)
 	files.sort()
@@ -43,11 +44,8 @@ func _poll_command() -> void:
 			continue
 		_last_command_id = command_id
 		DirAccess.remove_absolute(command_path)
-		# Serialize editor mutations: pause polling while a scene is opening and
-		# selection is being verified, then resume for the next queued command.
-		_poll_timer.stop()
-		await _process_command(command, command_id)
-		_poll_timer.start()
+		_processing_command = true
+		_process_command(command, command_id)
 		return
 
 func _process_command(command: Dictionary, command_id: String) -> void:
@@ -56,6 +54,7 @@ func _process_command(command: Dictionary, command_id: String) -> void:
 	print("[DRAGON_INSPECTOR] RECEIVED id=%s scene=%s node=%s" % [command_id, scene_path, str(command.get("node_path", "."))])
 	if scene_path.is_empty():
 		push_error("[DRAGON_INSPECTOR] %s missing scene path" % command_id)
+		_processing_command = false
 		return
 	EditorInterface.open_scene_from_path(scene_path)
 
@@ -64,15 +63,18 @@ func _process_command(command: Dictionary, command_id: String) -> void:
 	var root := EditorInterface.get_edited_scene_root()
 	if root == null:
 		push_error("[DRAGON_INSPECTOR] %s no_edited_scene_root scene=%s" % [command_id, scene_path])
+		_processing_command = false
 		return
 	if root.scene_file_path != scene_path:
 		push_error("[DRAGON_INSPECTOR] %s wrong_scene expected=%s actual=%s" % [command_id, scene_path, root.scene_file_path])
+		_processing_command = false
 		return
 
 	var node_path := str(command.get("node_path", "."))
 	var selected: Node = root if node_path == "." else root.get_node_or_null(NodePath(node_path))
 	if selected == null:
 		push_error("[DRAGON_INSPECTOR] %s node_not_found scene=%s node=%s" % [command_id, scene_path, node_path])
+		_processing_command = false
 		return
 
 	var selection := EditorInterface.get_selection()
@@ -81,6 +83,8 @@ func _process_command(command: Dictionary, command_id: String) -> void:
 	await get_tree().process_frame
 	if not selection.get_selected_nodes().has(selected):
 		push_error("[DRAGON_INSPECTOR] %s selection_failed scene=%s node=%s" % [command_id, scene_path, node_path])
+		_processing_command = false
 		return
 
 	print("[DRAGON_INSPECTOR] VERIFIED id=%s scene=%s node=%s type=%s" % [command_id, scene_path, node_path, selected.get_class()])
+	_processing_command = false
