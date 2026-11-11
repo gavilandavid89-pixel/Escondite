@@ -95,18 +95,18 @@ with open(sys.argv[2],"w",encoding="utf-8") as out:
       if not path.endswith(".tscn"): continue
       # Capture the scene root once, then every child node. An empty path is
       # ambiguous in Godot; "." explicitly means the edited scene root.
-      out.write(path+"\t.\n")
+      out.write(path+"|.\n")
       for node in scene.get("nodes",[]):
           node_path=node.get("node_path","")
           if node_path == ".": continue
-          out.write(path+"\t"+node_path+"\n")
+          out.write(path+"|"+node_path+"\n")
 PYCOMMANDS
 test -s "$OUTPUT_DIR/scene-node-commands.tsv"
 command_total=$(wc -l < "$OUTPUT_DIR/scene-node-commands.tsv")
 echo "[EDITOR] Queued $command_total scene/node inspections"
 
 command_index=0
-while IFS=$'\t' read -r scene_path node_path; do
+while IFS='|' read -r scene_path node_path; do
   [ -n "$scene_path" ] || continue
   command_index=$((command_index + 1))
   command_id="inspect-$command_index"
