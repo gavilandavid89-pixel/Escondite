@@ -184,17 +184,24 @@ func _find_scene_dock_item(target: Node) -> Dictionary:
 		var root_item := tree.get_root()
 		if root_item == null:
 			continue
-		var match_item := _find_tree_item_for_node(root_item, target)
+		var edited_root := EditorInterface.get_edited_scene_root()
+		var target_path := str(edited_root.get_path_to(target)) if edited_root != null else ""
+		var match_item := _find_tree_item_for_node(root_item, target, target_path, ".")
 		if match_item != null:
 			return {"tree": tree, "item": match_item}
 	return {}
 
-func _find_tree_item_for_node(item: TreeItem, target: Node) -> TreeItem:
-	if item.get_metadata(0) == target:
+func _find_tree_item_for_node(item: TreeItem, target: Node, target_path: String, current_path: String) -> TreeItem:
+	var metadata: Variant = item.get_metadata(0)
+	if metadata is Node and metadata == target:
 		return item
 	var child := item.get_first_child()
 	while child != null:
-		var match_item := _find_tree_item_for_node(child, target)
+		var child_name := child.get_text(0)
+		var child_path := child_name if current_path == "." else current_path + "/" + child_name
+		if child_path == target_path and child_name == str(target.name):
+			return child
+		var match_item := _find_tree_item_for_node(child, target, target_path, child_path)
 		if match_item != null:
 			return match_item
 		child = child.get_next()
