@@ -15,6 +15,8 @@ var power_label: Label
 var points_label: Label
 var quest_label: Label
 var zone_label: Label
+var position_label: Label
+var last_position_text := ""
 var combat_label: Label
 var selected_skill_label: Label
 var toast_label: Label
@@ -58,9 +60,10 @@ func _build() -> void:
 	quest_label=label("MISIÓN",Vector2(15,12),Vector2(420,90),14,Color(0.93,0.90,1)); qp.add_child(quest_label)
 
 	# minimap
-	var map:=Panel.new(); map.position=Vector2(1040,16); map.size=Vector2(220,160); map.add_theme_stylebox_override("panel",style(Color(0.02,0.03,0.05,0.85),Color(0.23,0.48,0.68,0.75),10)); root.add_child(map)
+	var map:=Panel.new(); map.position=Vector2(1040,16); map.size=Vector2(220,184); map.add_theme_stylebox_override("panel",style(Color(0.02,0.03,0.05,0.85),Color(0.23,0.48,0.68,0.75),10)); root.add_child(map)
 	map.add_child(label("MINIMAPA",Vector2(10,7),Vector2(200,22),11,Color(0.55,0.80,1)))
-	var mini:=MINIMAP_SCRIPT.new(); mini.name="Mini"; mini.position=Vector2(10,34); mini.size=Vector2(200,112); map.add_child(mini); mini.setup(world)
+	var mini:=MINIMAP_SCRIPT.new(); mini.name="Mini"; mini.position=Vector2(10,31); mini.size=Vector2(200,104); map.add_child(mini); mini.setup(world)
+	position_label=label("POS X 0000 • Y 0000",Vector2(10,145),Vector2(200,25),10,Color(0.68,0.84,1)); position_label.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER; position_label.tooltip_text="Coordenadas del jugador en el mundo actual"; map.add_child(position_label)
 
 	# top menu button
 	menu_button=button("☰",Vector2(1176,170),Vector2(70,52),24); root.add_child(menu_button); menu_button.pressed.connect(toggle_menu)
@@ -90,6 +93,14 @@ func _build() -> void:
 	combat_label=label("",Vector2(420,145),Vector2(400,32),17,Color(0.82,0.92,1)); combat_label.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER; root.add_child(combat_label)
 	selected_skill_label=label("SELECCIONADA: PUÑO BÁSICO • EJECUTAR",Vector2(520,468),Vector2(440,25),11,Color(0.64,0.82,0.96)); selected_skill_label.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER; root.add_child(selected_skill_label)
 	toast_label=label("",Vector2(380,670),Vector2(520,34),16,Color(1,0.88,0.48)); toast_label.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER; root.add_child(toast_label)
+
+func _process(_delta: float) -> void:
+	if not is_instance_valid(player) or not is_instance_valid(position_label):
+		return
+	var current := "POS X %04d • Y %04d" % [roundi(player.global_position.x), roundi(player.global_position.y)]
+	if current != last_position_text:
+		last_position_text = current
+		position_label.text = current
 
 func get_joystick()->DBVirtualJoystick:
 	return joystick
