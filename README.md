@@ -28,37 +28,36 @@ Prototipo RPG 2D para Godot 4.7.2, construido desde cero a partir de ideas de un
 
 ## Desarrollo y revisión visual automatizados
 
-Los cambios en `main` que afectan al juego activan **Dragon Realm Visual QA**. El workflow descarga Godot 4.7.2 oficial, importa el proyecto, ejecuta las pruebas de integración y regresión, y abre el juego en una pantalla virtual Xvfb para capturar:
+Los cambios en `main` que afectan al juego activan **Dragon Realm Visual QA**. El workflow descarga Godot 4.7.2, importa el proyecto, ejecuta pruebas de integración/regresión y reúne evidencia visual y textual en un único artefacto.
 
-- Menú principal.
-- Valle Azul (gameplay).
-- Ciudad Capsule.
-- Pantanos de Namek.
+### Capturas actuales
+- Menú y vistas de gameplay (Valle Azul, Ciudad Capsule y Namek).
+- Editor Godot abierto sin el juego.
+- Juego en ventana con el editor detrás.
+- Juego en pantalla completa.
+- Registros del editor y del juego, reunidos en `editor-debugger-output.txt`.
 
-Las imágenes y los registros quedan publicados como artefacto de GitHub Actions durante 14 días. Esto elimina la necesidad de abrir Godot Web para revisar cada cambio. El flujo local equivalente es:
+### Inspección estructural
+- Inventario de escenas y nodos, con jerarquía, tipos, grupos, conexiones y scripts asociados.
+- Índice de todos los scripts GDScript y copia íntegra del código fuente dentro del artefacto.
+- Ajustes declarados en `project.godot` y volcado de propiedades efectivas de `ProjectSettings`.
+- Preferencias del editor (`editor-settings-4.tres`) cuando Godot las genera en el runner.
+- Logs separados y salida consolidada para diagnóstico.
+
+El artefacto se conserva 14 días. La concurrencia está configurada para **no cancelar una ejecución activa** cuando llega otra solicitud: las nuevas ejecuciones quedan en cola.
+
+### Próximas capas de inspección
+La captura de pestañas Script, escenas individuales dentro del editor, selección de cada nodo/hijo, panel Inspector y todas las páginas de Project Settings/Editor Settings, además de las pestañas Debugger/Output, requiere automatización interactiva específica del editor. No se considera terminada hasta que cada vista tenga evidencia y el contenido de sus paneles se archive. El inventario estructural y los logs actuales son una primera capa, no un sustituto de esas capturas.
+
+Godot Web sigue disponible para inspecciones interactivas especiales; no es obligatorio abrirlo para cada cambio.
+
+### Ejecución y pruebas
 
 ```bash
 GODOT_BIN=/ruta/a/godot OUTPUT_DIR=/tmp/dragon-visuals bash scripts/ci/capture_visuals.sh
-```
-
-Godot Web y los complementos **Godot Command Center** / **Godot Shared Project Sync** quedan como herramientas opcionales para inspecciones interactivas o sincronizaciones especiales; no son un paso obligatorio del ciclo normal de desarrollo. La captura CI es del juego realmente ejecutándose, no una imagen simulada del editor.
-
-3. Para pruebas automáticas:
-
-```bash
-Godot --headless --path . -- --self-test
-```
-
-4. Para el servidor de desarrollo:
-
-```bash
+godot --headless --path . -- --self-test
 python3 server/server.py
-```
-
-5. Para el test de red:
-
-```bash
-Godot --headless --path . --script tests/network_test.gd
+godot --headless --path . --script tests/network_test.gd
 ```
 
 ## Arquitectura
