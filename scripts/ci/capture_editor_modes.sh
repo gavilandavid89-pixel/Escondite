@@ -65,11 +65,11 @@ editor_pid=$!
 sleep "$EDITOR_WAIT"
 kill -0 "$editor_pid"
 find "$HOME/.config/godot" -maxdepth 1 -type f -name "editor_settings*" -exec cp {} "$OUTPUT_DIR/" \; 2>/dev/null || true
-ffmpeg -y -loglevel error -f x11grab -video_size "$SCREEN_SIZE" -i "$DISPLAY" -frames:v 1 "$OUTPUT_DIR/editor-only.png"
+ffmpeg -nostdin -y -loglevel error -f x11grab -video_size "$SCREEN_SIZE" -i "$DISPLAY" -frames:v 1 "$OUTPUT_DIR/editor-only.png"
 
 env DISPLAY="$x_display" xdotool key --clearmodifiers ctrl+F1
 sleep 2
-ffmpeg -y -loglevel error -f x11grab -video_size "$SCREEN_SIZE" -i "$DISPLAY" -frames:v 1 "$OUTPUT_DIR/editor-2d-workspace.png"
+ffmpeg -nostdin -y -loglevel error -f x11grab -video_size "$SCREEN_SIZE" -i "$DISPLAY" -frames:v 1 "$OUTPUT_DIR/editor-2d-workspace.png"
 
 # Capture the script workspace and both diagnostic docks.
 env DISPLAY="$x_display" xdotool key --clearmodifiers ctrl+alt+o
@@ -77,13 +77,13 @@ sleep 1
 env DISPLAY="$x_display" xdotool type --clearmodifiers --delay 2 "main.gd"
 env DISPLAY="$x_display" xdotool key Return
 sleep 3
-ffmpeg -y -loglevel error -f x11grab -video_size "$SCREEN_SIZE" -i "$DISPLAY" -frames:v 1 "$OUTPUT_DIR/editor-script-main.png"
+ffmpeg -nostdin -y -loglevel error -f x11grab -video_size "$SCREEN_SIZE" -i "$DISPLAY" -frames:v 1 "$OUTPUT_DIR/editor-script-main.png"
 env DISPLAY="$x_display" xdotool key --clearmodifiers alt+o
 sleep 2
-ffmpeg -y -loglevel error -f x11grab -video_size "$SCREEN_SIZE" -i "$DISPLAY" -frames:v 1 "$OUTPUT_DIR/editor-output-panel.png"
+ffmpeg -nostdin -y -loglevel error -f x11grab -video_size "$SCREEN_SIZE" -i "$DISPLAY" -frames:v 1 "$OUTPUT_DIR/editor-output-panel.png"
 env DISPLAY="$x_display" xdotool key --clearmodifiers alt+d
 sleep 2
-ffmpeg -y -loglevel error -f x11grab -video_size "$SCREEN_SIZE" -i "$DISPLAY" -frames:v 1 "$OUTPUT_DIR/editor-debugger-panel.png"
+ffmpeg -nostdin -y -loglevel error -f x11grab -video_size "$SCREEN_SIZE" -i "$DISPLAY" -frames:v 1 "$OUTPUT_DIR/editor-debugger-panel.png"
 
 # The plugin opens each scene through EditorInterface and selects every node
 # so screenshots show the actual Scene dock and Inspector selection.
@@ -130,7 +130,7 @@ while IFS= read -r command_json; do
   fi
   screenshot=$(printf "%s/views/inspect-%04d.png" "$OUTPUT_DIR" "$command_index")
   mkdir -p "$(dirname "$screenshot")"
-  ffmpeg -y -loglevel error -f x11grab -video_size "$SCREEN_SIZE" -i "$DISPLAY" -frames:v 1 "$screenshot"
+  ffmpeg -nostdin -y -loglevel error -f x11grab -video_size "$SCREEN_SIZE" -i "$DISPLAY" -frames:v 1 "$screenshot"
 done < "$OUTPUT_DIR/scene-node-commands.jsonl"
 
 verified_total=$(grep -c "\[DRAGON_INSPECTOR\] VERIFIED id=inspect-" "$OUTPUT_DIR/editor.log" || true)
@@ -145,7 +145,7 @@ echo "[EDITOR] Launching windowed game over editor"
 game_pid=$!
 sleep "$GAME_WAIT"
 kill -0 "$game_pid"
-ffmpeg -y -loglevel error -f x11grab -video_size "$SCREEN_SIZE" -i "$DISPLAY" -frames:v 1 "$OUTPUT_DIR/game-windowed-over-editor.png"
+ffmpeg -nostdin -y -loglevel error -f x11grab -video_size "$SCREEN_SIZE" -i "$DISPLAY" -frames:v 1 "$OUTPUT_DIR/game-windowed-over-editor.png"
 kill -TERM "$game_pid" 2>/dev/null || true
 wait "$game_pid" 2>/dev/null || true
 game_pid=""
@@ -155,13 +155,13 @@ echo "[EDITOR] Launching fullscreen game"
 game_pid=$!
 sleep "$GAME_WAIT"
 kill -0 "$game_pid"
-ffmpeg -y -loglevel error -f x11grab -video_size "$SCREEN_SIZE" -i "$DISPLAY" -frames:v 1 "$OUTPUT_DIR/game-fullscreen.png"
+ffmpeg -nostdin -y -loglevel error -f x11grab -video_size "$SCREEN_SIZE" -i "$DISPLAY" -frames:v 1 "$OUTPUT_DIR/game-fullscreen.png"
 kill -TERM "$game_pid" 2>/dev/null || true
 wait "$game_pid" 2>/dev/null || true
 game_pid=""
 
 sleep 2
-ffmpeg -y -loglevel error -f x11grab -video_size "$SCREEN_SIZE" -i "$DISPLAY" -frames:v 1 "$OUTPUT_DIR/editor-clean.png"
+ffmpeg -nostdin -y -loglevel error -f x11grab -video_size "$SCREEN_SIZE" -i "$DISPLAY" -frames:v 1 "$OUTPUT_DIR/editor-clean.png"
 
 for file in "$OUTPUT_DIR"/editor-only.png "$OUTPUT_DIR"/editor-2d-workspace.png "$OUTPUT_DIR"/editor-script-main.png "$OUTPUT_DIR"/editor-output-panel.png "$OUTPUT_DIR"/editor-debugger-panel.png "$OUTPUT_DIR"/game-windowed-over-editor.png "$OUTPUT_DIR"/game-fullscreen.png "$OUTPUT_DIR"/editor-clean.png; do
   test -s "$file"
