@@ -105,17 +105,13 @@ test -s "$OUTPUT_DIR/scene-node-commands.jsonl"
 command_total=$(wc -l < "$OUTPUT_DIR/scene-node-commands.jsonl")
 echo "[EDITOR] Queued $command_total scene/node inspections"
 
-# Consume complete JSON records instead of splitting paths on shell delimiters.
-# The exact JSON bytes are atomically handed to the editor plugin.
+# Consume each complete JSON record unchanged. Sequential filenames map to
+# scene-node-commands.tsv, avoiding shell parsing of resource paths entirely.
+command_index=0
 while IFS= read -r command_json; do
   [ -n "$command_json" ] || continue
-  command_id=$(python3 -c 'import json,sys; print(json.loads(sys.argv[1])["id"])' "$command_json")
-  scene_path=$(python3 -c 'import json,sys; print(json.loads(sys.argv[1])["scene"])' "$command_json")
-  node_path=$(python3 -c 'import json,sys; print(json.loads(sys.argv[1])["node_path"])' "$command_json")
-  case "$scene_path" in
-    res://*.tscn) ;;
-    *) echo "[EDITOR] Invalid scene path in command $command_id: <$scene_path>" >&2; exit 1 ;;
-  esac
+  command_index=$((command_index + 1))
+  command_id="inspect-$command_index"
   command_tmp="$command_file.tmp"
   printf '%s\n' "$command_json" > "$command_tmp"
   mv "$command_tmp" "$command_file"
@@ -126,28 +122,20 @@ while IFS= read -r command_json; do
     kill -0 "$editor_pid"
   done
   if [ "$ready" -ne 1 ]; then
-    echo "[EDITOR] Timed out waiting for $scene_path node=$node_path" >&2
+    echo "[EDITOR] Timed out waiting for command $command_id (see scene-node-commands.tsv)" >&2
     tail -80 "$OUTPUT_DIR/editor.log" >&2
     exit 1
   fi
-  scene_rel="${scene_path#res://}"
-  scene_slug=$(printf "%s" "$scene_rel" | tr '/.' '__')
-  node_slug=$(printf "%s" "${node_path:-root}" | tr '/ ' '__')
-  if [ "$node_path" = "." ]; then
-    screenshot="$OUTPUT_DIR/scenes/$scene_slug.png"
-  else
-    screenshot="$OUTPUT_DIR/nodes/$scene_slug--$node_slug.png"
-  fi
+  screenshot=$(printf "%s/views/inspect-%04d.png" "$OUTPUT_DIR" "$command_index")
   mkdir -p "$(dirname "$screenshot")"
   ffmpeg -y -loglevel error -f x11grab -video_size "$SCREEN_SIZE" -i "$DISPLAY" -frames:v 1 "$screenshot"
 done < "$OUTPUT_DIR/scene-node-commands.jsonl"
 
 verified_total=$(grep -c "\[DRAGON_INSPECTOR\] VERIFIED id=inspect-" "$OUTPUT_DIR/editor.log" || true)
 [ "$verified_total" -eq "$command_total" ] || { echo "Verified $verified_total of $command_total scene/node inspections" >&2; exit 1; }
-scene_capture_total=$(find "$OUTPUT_DIR/scenes" -maxdepth 1 -type f -name "*.png" 2>/dev/null | wc -l)
-node_capture_total=$(find "$OUTPUT_DIR/nodes" -type f -name "*.png" 2>/dev/null | wc -l)
-[ "$((scene_capture_total + node_capture_total))" -eq "$command_total" ] || { echo "Captured $((scene_capture_total + node_capture_total)) of $command_total requested editor views" >&2; exit 1; }
-echo "[EDITOR] Verified $verified_total commands; captured $scene_capture_total scene roots and $node_capture_total nodes"
+view_capture_total=$(find "$OUTPUT_DIR/views" -type f -name "inspect-*.png" 2>/dev/null | wc -l)
+[ "$view_capture_total" -eq "$command_total" ] || { echo "Captured $view_capture_total of $command_total requested editor views" >&2; exit 1; }
+echo "[EDITOR] Verified $verified_total commands; captured $view_capture_total scene/node views"
 
 # Game preview floating above the editor, then fullscreen.
 echo "[EDITOR] Launching windowed game over editor"
